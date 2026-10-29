@@ -30,7 +30,9 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 - **Sujets** : jusqu'à 3 sujets et une foule ; personnes, produits, animaux, véhicules, créatures, objets ; images de référence (visage, tenue, accessoires…).
 - **Plateau** : vues de dessus (Z), de face (X) et de côté (Y), avec des réglages au clic.
 - **Viseur** : aperçu de la composition en direct.
-- **Prompt** : adapté à Gemini, GPT Image, Flux, Midjourney et Stable Diffusion.
+- **Prompt** : adapté à Gemini, ChatGPT (GPT Image), Flux, Midjourney et Stable Diffusion.
+- **Export** : récapitulatif de la scène, prompt modifiable, dossier de projet prêt à importer dans votre modèle, ou génération directe avec une clé API.
+- **Projets** : un projet par image, sauvegardés dans le navigateur et exportables en fichier `.aisary`.
 - **Barres de prompt** dans chaque catégorie pour écrire librement.
 
 ## Utiliser AIsary
@@ -43,10 +45,11 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 
 - [x] Prototype : composition de la scène et génération du prompt
 - [x] Onglet Madagascar, catégories, barres de prompt, images de référence
-- [ ] Interrupteur **Avec API / Sans API**
-- [ ] Mode sans API : export d'un dossier par projet (prompt + images de référence renommées)
-- [ ] Mode avec API : gestion des clés, choix du modèle, génération dans l'appli
-- [ ] Enregistrement et réouverture des scènes
+- [x] Interrupteur **Avec API / Sans API**
+- [x] Mode sans API : export d'un dossier par projet (prompt + images de référence renommées), ou ZIP
+- [x] Mode avec API : gestion des clés, choix du modèle, génération Gemini et OpenAI
+- [x] Accueil, projets, enregistrement et réouverture des scènes (.aisary)
+- [x] Guide de démarrage et visite guidée
 - [ ] Vue 3D de la scène
 - [ ] Applications Mac et Windows
 - [ ] Export PSD par calques et vectoriel
@@ -59,7 +62,10 @@ Lisez [CONTRIBUTING.md](CONTRIBUTING.md) pour savoir comment faire.
 ## Soutenir AIsary
 
 AIsary est gratuit et le restera. Si l'outil vous fait gagner du temps, vous pouvez soutenir son développement.
-Les moyens de don (MVola et GitHub Sponsors) seront bientôt indiqués ici.
+- **MVola** : `+261 38 71 559 16` (Toky Rakotomalala)
+- **GitHub Sponsors** : bientôt disponible pour les dons depuis l'étranger.
+
+Misaotra ! (Merci !)
 
 ## Licence
 
