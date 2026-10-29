@@ -45,11 +45,7 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 
 ### Fabriquer les applications
 
-Les applications sont fabriquées automatiquement par GitHub Actions (Tauri) quand un tag de version est poussé :
-
-```bash
-git tag v0.5.0 && git push origin v0.5.0
-```
+Les applications sont fabriquées automatiquement par GitHub Actions (Tauri) à chaque changement de `version` dans `src-tauri/tauri.conf.json`, ou à la main depuis l'onglet **Actions** > « Applications Mac et Windows » > **Run workflow**. Les fichiers sont publiés dans **Releases**.
 
 ## Feuille de route
 

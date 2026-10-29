@@ -1,9 +1,12 @@
 # Fabrique les applications AIsary pour Mac et Windows et les publie dans « Releases ».
-# Se lance quand on pousse un tag de version (ex. v0.5.0), ou à la main depuis l'onglet Actions.
+# Se lance quand la version change dans src-tauri/tauri.conf.json, quand on pousse un tag (ex. v0.5.0),
+# ou à la main depuis l'onglet Actions (« Run workflow »).
 name: Applications Mac et Windows
 
 on:
   push:
+    branches: [main]
+    paths: ['src-tauri/tauri.conf.json', '.github/workflows/release.yml']
     tags: ['v*']
   workflow_dispatch:
 
