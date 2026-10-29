@@ -13,12 +13,14 @@ function defaults(){return {v:2,tab:'decor',view:'z',bg:'foret',bgCat:'nature',m
  subjects:[newSubject(1,'person',50,50)],subSel:1,crowd:'none',interact:'side',adv:{},
  render:{model:'gemini',ratio:'4:5',usage:'social',style:'ad'}}}
 let S; try{S=JSON.parse(localStorage.getItem('aisary-v2'))}catch(e){}
-if(!S||S.v!==2) S=defaults();
-S.notes=S.notes||{};S.madaReg=S.madaReg||'tana';if(S.bgCat==='mada')S.bgCat='nature';S.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[]});
+const HAD_OLD=!!S;
+function normalize(X){if(!X||X.v!==2)X=defaults();const d=defaults();for(const k in d)if(X[k]===undefined)X[k]=d[k];
+ X.notes=X.notes||{};X.adv=X.adv||{};X.madaReg=X.madaReg||'tana';if(X.bgCat==='mada')X.bgCat='nature';X.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[]});if(X.tab==='export')X.tab='decor';return X}
+S=normalize(S);
 let POP=null, bgQ='';
 let R={}; try{R=JSON.parse(localStorage.getItem('aisary-refs'))||{}}catch(e){R={}}
-function save(){try{localStorage.setItem('aisary-v2',JSON.stringify(S))}catch(e){}}
-function saveRefs(){try{localStorage.setItem('aisary-refs',JSON.stringify(R))}catch(e){toast('Images trop lourdes pour être gardées après fermeture')}}
+function save(){try{localStorage.setItem('aisary-v2',JSON.stringify(S))}catch(e){}if(window.scheduleProjSave)scheduleProjSave()}
+function saveRefs(){try{localStorage.setItem('aisary-refs',JSON.stringify(R))}catch(e){}if(window.scheduleProjSave)scheduleProjSave()}
 
 function get(p){const k=p.split('.');let o=S;for(let i=0;i<k.length;i++){if(k[i]==='lights'||k[i]==='subjects'){const id=k[++i];o=S[k[i-1]].find(l=>l.id==id);continue}o=o?.[k[i]]}return o}
 function set(p,v){const k=p.split('.');let o=S;for(let i=0;i<k.length-1;i++){if(k[i]==='lights'||k[i]==='subjects'){const id=k[++i];o=S[k[i-1]].find(l=>l.id==id);continue}if(o[k[i]]==null)o[k[i]]={};o=o[k[i]]}o[k[k.length-1]]=v}
@@ -35,7 +37,7 @@ function kToHex(k){k/=100;let r,g,b;
  if(k<=66){r=255;g=99.47*Math.log(k)-161.12;b=k<=19?0:138.52*Math.log(k-10)-305.04}
  else{r=329.7*Math.pow(k-60,-.1332);g=288.12*Math.pow(k-60,-.0755);b=255}
  const c=x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0');return '#'+c(r)+c(g)+c(b)}
-const lightColor=l=>l.type==='flag'?'#55525c':(GEL[l.gel]?.hex||kToHex(l.kelvin));
+const lightColor=l=>l.type==='flag'?'#4f5f58':(GEL[l.gel]?.hex||kToHex(l.kelvin));
 const opts=(obj,cur)=>Object.entries(obj).map(([k,v])=>`<option value="${k}"${k==cur?' selected':''}>${esc(typeof v==='string'?k:v.fr)}</option>`).join('');
 const optsG=(g,cur)=>Object.entries(g).map(([n,o])=>`<optgroup label="${esc(n)}">${opts(o,cur)}</optgroup>`).join('');
 const chip=(path,k,v)=>`<button class="chip" data-set="${path}" data-val="${k}" aria-pressed="${get(path)==k}">${ic(v.ic)}<span>${esc(v.fr)}</span></button>`;
@@ -92,24 +94,24 @@ function framingThumb(k,v){const w=44,h=30,s=.8*h/100*v.k,sh=SHAPES.person;let t
  return `<svg viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="var(--sky)"/><path d="${sh.d}" transform="translate(${w/2} ${ty}) scale(${s})" fill="var(--fig)"/></svg>`}
 function angleThumb(k,v){const gy=27,px=13,head=10,cz=v.z;let cx=33,cy=gy-Math.min(cz,5)*4.6;if(k==='top'){cx=px;cy=2.5}if(k==='aerial'){cx=36;cy=3}
  const rot=k==='dutch'?18:0;
- return `<svg viewBox="0 0 44 30"><line x1="0" y1="${gy}" x2="44" y2="${gy}" stroke="var(--line)" stroke-width=".8"/><path d="${SHAPES.person.d}" transform="translate(${px} ${gy-17}) scale(.17)" fill="var(--fig)"/><line x1="${cx}" y1="${cy}" x2="${px}" y2="${head+(gy-27)}" stroke="var(--tungsten)" stroke-width=".7" stroke-dasharray="1.5 1"/><rect x="${cx-3}" y="${cy-2}" width="6" height="4" rx="1" fill="var(--fg)" transform="rotate(${rot} ${cx} ${cy})"/></svg>`}
+ return `<svg viewBox="0 0 44 30"><line x1="0" y1="${gy}" x2="44" y2="${gy}" stroke="var(--line)" stroke-width=".8"/><path d="${SHAPES.person.d}" transform="translate(${px} ${gy-17}) scale(.17)" fill="var(--fig)"/><line x1="${cx}" y1="${cy}" x2="${px}" y2="${head+(gy-27)}" stroke="var(--accent)" stroke-width=".7" stroke-dasharray="1.5 1"/><rect x="${cx-3}" y="${cy-2}" width="6" height="4" rx="1" fill="var(--fg)" transform="rotate(${rot} ${cx} ${cy})"/></svg>`}
 function lensThumb(k,v){let f=v.fov||2*Math.atan(36/(2*v.f))*180/Math.PI;if(v.ana)f*=1.33;f=Math.min(f,180);const a=f/2*Math.PI/180,L=24,cx=22,cy=28;
  const p1=[cx-Math.sin(a)*L,cy-Math.cos(a)*L],p2=[cx+Math.sin(a)*L,cy-Math.cos(a)*L];
- return `<svg viewBox="0 0 44 30"><path d="M${cx} ${cy}L${p1}A${L} ${L} 0 0 1 ${p2}Z" fill="var(--tungsten)" opacity=".28"/><path d="M${p1}L${cx} ${cy}L${p2}" stroke="var(--tungsten)" stroke-width=".7" fill="none"/><rect x="${cx-4}" y="${cy-3}" width="8" height="4" rx="1" fill="var(--fg)"/><text x="40" y="8" text-anchor="end" font-size="6" fill="var(--muted)" font-family="var(--f-mono)">${Math.round(f)}°</text></svg>`}
+ return `<svg viewBox="0 0 44 30"><path d="M${cx} ${cy}L${p1}A${L} ${L} 0 0 1 ${p2}Z" fill="var(--accent)" opacity=".28"/><path d="M${p1}L${cx} ${cy}L${p2}" stroke="var(--accent)" stroke-width=".7" fill="none"/><rect x="${cx-4}" y="${cy-3}" width="8" height="4" rx="1" fill="var(--fg)"/><text x="40" y="8" text-anchor="end" font-size="6" fill="var(--muted)" font-family="var(--f-mono)">${Math.round(f)}°</text></svg>`}
 function apertureSvg(ap,size=60){const r=size/2-2,o=2+(r-4)*Math.pow(1.2/ap,.55);let pts=[];for(let i=0;i<7;i++){const a=i/7*Math.PI*2-Math.PI/2;pts.push((size/2+Math.cos(a)*o).toFixed(1)+','+(size/2+Math.sin(a)*o).toFixed(1))}
- return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="#0c0b0f" stroke="var(--line)"/><polygon points="${pts.join(' ')}" fill="var(--tungsten)" opacity=".85"/></svg>`}
-function bokehSvg(ap){const b=ap<=1.8?3.2:ap<=2.8?2.4:ap<=5.6?1.2:.2,dots=[[12,10,'#f0a24b'],[30,7,'#8db6ff'],[48,12,'#ffd27a'],[22,22,'#ff8a7a'],[52,24,'#f0a24b'],[38,20,'#e9e4da']];
- return `<svg viewBox="0 0 64 34" width="120" height="64"><defs><filter id="bk" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${b}"/></filter></defs><rect width="64" height="34" rx="4" fill="#141317"/><g filter="url(#bk)">${dots.map(d=>`<circle cx="${d[0]}" cy="${d[1]}" r="${2.5+b*.9}" fill="${d[2]}" opacity=".8"/>`).join('')}</g><path d="${SHAPES.person.d}" transform="translate(32 9) scale(.25)" fill="var(--fg)"/></svg>`}
+ return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="#0c0e0d" stroke="var(--line)"/><polygon points="${pts.join(' ')}" fill="var(--accent)" opacity=".85"/></svg>`}
+function bokehSvg(ap){const b=ap<=1.8?3.2:ap<=2.8?2.4:ap<=5.6?1.2:.2,dots=[[12,10,'#3dff8f'],[30,7,'#8db6ff'],[48,12,'#a8ffd0'],[22,22,'#ff8a7a'],[52,24,'#3dff8f'],[38,20,'#dee5e2']];
+ return `<svg viewBox="0 0 64 34" width="120" height="64"><defs><filter id="bk" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${b}"/></filter></defs><rect width="64" height="34" rx="4" fill="#131715"/><g filter="url(#bk)">${dots.map(d=>`<circle cx="${d[0]}" cy="${d[1]}" r="${2.5+b*.9}" fill="${d[2]}" opacity=".8"/>`).join('')}</g><path d="${SHAPES.person.d}" transform="translate(32 9) scale(.25)" fill="var(--fg)"/></svg>`}
 function timeThumb(k,v){const sy=Math.max(4,26-v.sun*.25);
- return `<svg viewBox="0 0 44 30"><defs><linearGradient id="tg${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${v.sky[0]}"/><stop offset="1" stop-color="${v.sky[1]}"/></linearGradient></defs><rect width="44" height="30" fill="url(#tg${k})"/>${v.sun>-5?`<circle cx="30" cy="${sy}" r="4" fill="${v.c}"/>`:v.sun>-50?`<circle cx="31" cy="8" r="3" fill="#e8ecf8"/><circle cx="32.5" cy="7" r="2.6" fill="${v.sky[0]}"/>`:`<rect x="16" y="6" width="12" height="10" rx="2" fill="#fff" opacity=".85"/>`}<rect y="23" width="44" height="7" fill="#000" opacity=".35"/></svg>`}
+ return `<svg viewBox="0 0 44 30"><defs><linearGradient id="tg${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${v.sky[0]}"/><stop offset="1" stop-color="${v.sky[1]}"/></linearGradient></defs><rect width="44" height="30" fill="url(#tg${k})"/>${v.sun>-5?`<circle cx="30" cy="${sy}" r="4" fill="${v.c}"/>`:v.sun>-50?`<circle cx="31" cy="8" r="3" fill="#eef2f0"/><circle cx="32.5" cy="7" r="2.6" fill="${v.sky[0]}"/>`:`<rect x="16" y="6" width="12" height="10" rx="2" fill="#fff" opacity=".85"/>`}<rect y="23" width="44" height="7" fill="#000" opacity=".35"/></svg>`}
 function ratioThumb(r){const [a,b]=r.split(':').map(Number),s=Math.min(34/a,24/b),w=a*s,h=b*s;return `<svg viewBox="0 0 44 30"><rect x="${(44-w)/2}" y="${(30-h)/2}" width="${w}" height="${h}" rx="1.5" fill="none" stroke="var(--fg)" stroke-width="1.2"/></svg>`}
 function moodThumb(k,v){return `<svg viewBox="0 0 44 30">${v.p.map((c,i)=>`<rect x="${i*14.66}" width="14.7" height="30" fill="${c}"/>`).join('')}</svg>`}
 function kitThumb(L){const T={x:50,y:50};
- const lights=L.map(a=>{const col=a[0]==='flag'?'#55525c':(GEL[a[7]]?.hex||kToHex(a[6]));return `<line x1="${a[2]}" y1="${a[3]}" x2="${T.x}" y2="${T.y}" stroke="${col}" stroke-width="1.2" opacity=".55"/><circle cx="${a[2]}" cy="${a[3]}" r="${a[0]==='reflector'||a[0]==='flag'?4:4.6}" fill="${a[0]==='reflector'?'#e9e4da':col}" ${a[0]==='reflector'?'opacity=".7"':''}/>`}).join('');
- return `<svg viewBox="6 6 88 88"><rect x="6" y="6" width="88" height="88" fill="#121116"/><circle cx="50" cy="50" r="22" fill="none" stroke="#2a2830" stroke-width=".6"/>${lights}<circle cx="50" cy="50" r="5" fill="#2b2930" stroke="#ece8e1" stroke-width="1.2"/><rect x="45" y="83" width="10" height="7" rx="1.5" fill="#ece8e1"/></svg>`}
+ const lights=L.map(a=>{const col=a[0]==='flag'?'#4f5f58':(GEL[a[7]]?.hex||kToHex(a[6]));return `<line x1="${a[2]}" y1="${a[3]}" x2="${T.x}" y2="${T.y}" stroke="${col}" stroke-width="1.2" opacity=".55"/><circle cx="${a[2]}" cy="${a[3]}" r="${a[0]==='reflector'||a[0]==='flag'?4:4.6}" fill="${a[0]==='reflector'?'#dee5e2':col}" ${a[0]==='reflector'?'opacity=".7"':''}/>`}).join('');
+ return `<svg viewBox="6 6 88 88"><rect x="6" y="6" width="88" height="88" fill="#121514"/><circle cx="50" cy="50" r="22" fill="none" stroke="#28302d" stroke-width=".6"/>${lights}<circle cx="50" cy="50" r="5" fill="#28312d" stroke="#e4e9e7" stroke-width="1.2"/><rect x="45" y="83" width="10" height="7" rx="1.5" fill="#e4e9e7"/></svg>`}
 
 /* ================= ONGLETS & PANNEAUX ================= */
-const TABS=[['decor','Décor','image'],['mada','Mada','map'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['sujet','Sujets','users'],['rendu','Rendu','frame']];
+const TABS=[['decor','Décor','image'],['mada','Mada','map'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['sujet','Sujets','users'],['rendu','Rendu','frame'],['export','Export','send']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([id,fr,i])=>`<button role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${ic(i)}<span>${fr}</span></button>`).join('')}
 
 function slot(key,label,icn){const u=R[key];return `<label class="slot${u?' has':''}" data-slot="${key}">${u?`<img src="${u}" alt=""><button class="unslot" data-unslot="${key}" aria-label="Retirer l'image">${ic('x')}</button>`:`${ic(icn||'image-plus')}`}<span>${esc(label)}</span><input type="file" accept="image/*" data-slotin="${key}" hidden></label>`}
@@ -144,45 +146,45 @@ function dofFr(){const a=S.camera.ap;return a<=2?'Faible profondeur de champ, fo
 const GY=56, ZS=10; // vues latérales : sol à y=56, 1 m = 10 unités
 const zy=z=>GY-z*ZS;
 function bgStrip(x,y,w,h,op){const sw=BGM[S.bg]?.sw||'#333';return `<foreignObject x="${x}" y="${y}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;border-radius:1.5px;background:${sw};opacity:${op}"></div></foreignObject>`}
-function crowdDots(){const n={none:0,few:5,medium:12,dense:22}[S.crowd];let o='';for(let i=0;i<n;i++){const x=10+((i*37)%80),y=16+((i*23)%22);o+=`<circle cx="${x}" cy="${y}" r="1.4" fill="#6d6962" opacity=".7"/>`}return o}
-function selRing(key,r=4.8){return POP&&POP.key===key?`<circle r="${r}" fill="none" stroke="#ece8e1" stroke-width=".45" stroke-dasharray="1 1"/>`:''}
+function crowdDots(){const n={none:0,few:5,medium:12,dense:22}[S.crowd];let o='';for(let i=0;i<n;i++){const x=10+((i*37)%80),y=16+((i*23)%22);o+=`<circle cx="${x}" cy="${y}" r="1.4" fill="#5e7169" opacity=".7"/>`}return o}
+function selRing(key,r=4.8){return POP&&POP.key===key?`<circle r="${r}" fill="none" stroke="#e4e9e7" stroke-width=".45" stroke-dasharray="1 1"/>`:''}
 function viewZ(){
  const c=S.camera,T=target(),fov=fovDeg()*Math.PI/180,ang=Math.atan2(T.y-c.y,T.x-c.x),R1=26;
  const p1=[c.x+Math.cos(ang-fov/2)*R1,c.y+Math.sin(ang-fov/2)*R1],p2=[c.x+Math.cos(ang+fov/2)*R1,c.y+Math.sin(ang+fov/2)*R1];
- let g='';for(let i=10;i<100;i+=10)g+=`<line x1="${i}" y1="2" x2="${i}" y2="98" stroke="#26242b" stroke-width=".2"/><line x1="2" y1="${i}" x2="98" y2="${i}" stroke="#26242b" stroke-width=".2"/>`;
+ let g='';for(let i=10;i<100;i+=10)g+=`<line x1="${i}" y1="2" x2="${i}" y2="98" stroke="#242b28" stroke-width=".2"/><line x1="2" y1="${i}" x2="98" y2="${i}" stroke="#242b28" stroke-width=".2"/>`;
  let L='';S.lights.forEach(l=>{const col=lightColor(l),a=Math.atan2(T.y-l.y,T.x-l.x),len=Math.hypot(T.x-l.x,T.y-l.y),sp=(LT[l.type].q.includes('hard')?.16:.42)*len*.5;
   const b1=[T.x+Math.cos(a+Math.PI/2)*sp,T.y+Math.sin(a+Math.PI/2)*sp],b2=[T.x-Math.cos(a+Math.PI/2)*sp,T.y-Math.sin(a+Math.PI/2)*sp];
   if(l.type!=='flag')L+=`<polygon points="${l.x},${l.y} ${b1} ${b2}" fill="${col}" opacity="${(.12+l.power/300)*.6}"/>`;
-  L+=`<g class="drag" data-drag="l:${l.id}" transform="translate(${l.x} ${l.y})"><circle r="6" fill="transparent"/>${selRing('l:'+l.id)}<g transform="rotate(${a*180/Math.PI})"><rect x="-1.4" y="-3" width="2.4" height="6" rx=".6" fill="${col}"/></g><circle r="1" fill="#141317"/><text y="-5.4" text-anchor="middle" class="svl">${esc(LROLE[l.role].fr)}</text></g>`});
- const subs=S.subjects.map((s,i)=>{const fp=s.kind==='vehicle'?`<rect x="-19" y="-8" width="38" height="16" rx="3" fill="#2b2930" stroke="#ece8e1" stroke-width=".5"/>`:s.kind==='animal'?`<ellipse rx="4.5" ry="2.4" fill="#2b2930" stroke="#ece8e1" stroke-width=".5"/>`:s.kind==='product'||s.kind==='object'?`<rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx=".8" fill="#2b2930" stroke="#ece8e1" stroke-width=".5"/>`:`<circle r="${s.kind==='fantasy'?5:3.4}" fill="#2b2930" stroke="#ece8e1" stroke-width=".5"/><circle cy="-.6" r="1.2" fill="#ece8e1"/>`;
+  L+=`<g class="drag" data-drag="l:${l.id}" transform="translate(${l.x} ${l.y})"><circle r="6" fill="transparent"/>${selRing('l:'+l.id)}<g transform="rotate(${a*180/Math.PI})"><rect x="-1.4" y="-3" width="2.4" height="6" rx=".6" fill="${col}"/></g><circle r="1" fill="#131715"/><text y="-5.4" text-anchor="middle" class="svl">${esc(LROLE[l.role].fr)}</text></g>`});
+ const subs=S.subjects.map((s,i)=>{const fp=s.kind==='vehicle'?`<rect x="-19" y="-8" width="38" height="16" rx="3" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='animal'?`<ellipse rx="4.5" ry="2.4" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='product'||s.kind==='object'?`<rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx=".8" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:`<circle r="${s.kind==='fantasy'?5:3.4}" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/><circle cy="-.6" r="1.2" fill="#e4e9e7"/>`;
   return `<g class="drag" data-drag="s:${s.id}" transform="translate(${s.x} ${s.y})"><circle r="6" fill="transparent"/>${selRing('s:'+s.id,6)}${fp}<text y="${s.kind==='vehicle'?12:7.4}" text-anchor="middle" class="svl">${S.subjects.length>1?'Sujet '+(i+1):'Sujet'}</text></g>`}).join('');
- return `<rect x="1" y="1" width="98" height="98" rx="3" fill="#1b1a1f" stroke="#33313a" stroke-width=".3"/>${g}
+ return `<rect x="1" y="1" width="98" height="98" rx="3" fill="#1a1f1d" stroke="#313a36" stroke-width=".3"/>${g}
   ${bgStrip(8,3,84,4.5,.9)}<text x="50" y="11" text-anchor="middle" class="svm">FOND · ${esc((BGM[S.bg]?.fr||'').toUpperCase())}</text>${crowdDots()}
-  <polygon points="${c.x},${c.y} ${p1} ${p2}" fill="#ece8e1" opacity=".05"/><line x1="${c.x}" y1="${c.y}" x2="${T.x}" y2="${T.y}" stroke="#ece8e1" stroke-width=".25" stroke-dasharray="1 1" opacity=".5"/>
+  <polygon points="${c.x},${c.y} ${p1} ${p2}" fill="#e4e9e7" opacity=".05"/><line x1="${c.x}" y1="${c.y}" x2="${T.x}" y2="${T.y}" stroke="#e4e9e7" stroke-width=".25" stroke-dasharray="1 1" opacity=".5"/>
   ${subs}${L}
-  <g class="drag" data-drag="cam" transform="translate(${c.x} ${c.y}) rotate(${ang*180/Math.PI+90})"><circle r="6" fill="transparent"/>${selRing('cam')}<rect x="-3.2" y="-1.6" width="6.4" height="4" rx=".8" fill="#ece8e1"/><rect x="-1.3" y="-3" width="2.6" height="1.6" fill="#ece8e1"/><circle cy=".4" r="1.2" fill="#141317"/></g>
+  <g class="drag" data-drag="cam" transform="translate(${c.x} ${c.y}) rotate(${ang*180/Math.PI+90})"><circle r="6" fill="transparent"/>${selRing('cam')}<rect x="-3.2" y="-1.6" width="6.4" height="4" rx=".8" fill="#e4e9e7"/><rect x="-1.3" y="-3" width="2.6" height="1.6" fill="#e4e9e7"/><circle cy=".4" r="1.2" fill="#131715"/></g>
   <text x="${c.x}" y="${Math.min(97.5,c.y+7)}" text-anchor="middle" class="svm">${LENS[c.lens].f} mm · ${c.z.toFixed(1)} m</text>`;
 }
 function sideShape(s,hx){const sh=SHAPES[s.kind],hm=subH(s),sc=hm*ZS/100,base=s.kind==='product'?.8:0;
- return `${s.kind==='product'?`<rect x="${hx-4}" y="${zy(.8)}" width="8" height="${.8*ZS}" fill="#2b2930" stroke="#55525c" stroke-width=".3"/>`:''}<path d="${sh.d}" transform="translate(${hx} ${zy(base+hm)}) scale(${sc})" fill="#3a3842" stroke="#ece8e1" stroke-width="${.5/sc}"/>`}
+ return `${s.kind==='product'?`<rect x="${hx-4}" y="${zy(.8)}" width="8" height="${.8*ZS}" fill="#28312d" stroke="#4f5f58" stroke-width=".3"/>`:''}<path d="${sh.d}" transform="translate(${hx} ${zy(base+hm)}) scale(${sc})" fill="#38423e" stroke="#e4e9e7" stroke-width="${.5/sc}"/>`}
 function viewSide(ax){ // ax 'x' = vue de face (horizontal = x), 'y' = vue de côté (horizontal = profondeur)
  const c=S.camera,T=target(),H=v=>ax==='x'?v.x:v.y;
- let g='';for(let m=0;m<=5;m++)g+=`<line x1="2" y1="${zy(m)}" x2="98" y2="${zy(m)}" stroke="#26242b" stroke-width=".2"/><text x="3" y="${zy(m)-.8}" class="svm" text-anchor="start">${m} m</text>`;
+ let g='';for(let m=0;m<=5;m++)g+=`<line x1="2" y1="${zy(m)}" x2="98" y2="${zy(m)}" stroke="#242b28" stroke-width=".2"/><text x="3" y="${zy(m)-.8}" class="svm" text-anchor="start">${m} m</text>`;
  const bg=ax==='x'?bgStrip(6,4,88,GY-4,.28):bgStrip(2,4,4,GY-4,.9);
  const subs=S.subjects.map(s=>`<g class="drag" data-drag="s:${s.id}">${sideShape(s,H(s))}<rect x="${H(s)-5}" y="${zy(subH(s))}" width="10" height="${subH(s)*ZS}" fill="transparent"/></g>`).join('');
  let L='';S.lights.forEach(l=>{const col=lightColor(l),lx=H(l),ly=zy(l.z);
-  L+=`<line x1="${lx}" y1="${ly}" x2="${H(T)}" y2="${zy(T.z)}" stroke="${col}" stroke-width=".35" opacity=".45"/><line x1="${lx}" y1="${ly}" x2="${lx}" y2="${GY}" stroke="#55525c" stroke-width=".25" stroke-dasharray=".8 .8"/>
-  <g class="drag" data-drag="l:${l.id}" transform="translate(${lx} ${ly})"><circle r="5" fill="transparent"/>${selRing('l:'+l.id,4)}<circle r="2.3" fill="${col}"/><circle r=".8" fill="#141317"/><text y="-3.6" text-anchor="middle" class="svl">${esc(LROLE[l.role].fr)}</text></g>`});
+  L+=`<line x1="${lx}" y1="${ly}" x2="${H(T)}" y2="${zy(T.z)}" stroke="${col}" stroke-width=".35" opacity=".45"/><line x1="${lx}" y1="${ly}" x2="${lx}" y2="${GY}" stroke="#4f5f58" stroke-width=".25" stroke-dasharray=".8 .8"/>
+  <g class="drag" data-drag="l:${l.id}" transform="translate(${lx} ${ly})"><circle r="5" fill="transparent"/>${selRing('l:'+l.id,4)}<circle r="2.3" fill="${col}"/><circle r=".8" fill="#131715"/><text y="-3.6" text-anchor="middle" class="svl">${esc(LROLE[l.role].fr)}</text></g>`});
  const cx=H(c),cy=zy(c.z),tilt=camTilt();let cam='';
  if(ax==='y'){const vf=fovDeg()*(+S.render.ratio.split(':')[1]/+S.render.ratio.split(':')[0])*Math.PI/180,t=tilt*Math.PI/180,LL=30;
   const dir=c.y>T.y?-1:1,e1=[cx+dir*Math.cos(t+vf/2)*LL,cy-Math.sin(t+vf/2)*LL],e2=[cx+dir*Math.cos(t-vf/2)*LL,cy-Math.sin(t-vf/2)*LL],ec=[cx+dir*Math.cos(t)*LL*.8,cy-Math.sin(t)*LL*.8];
-  cam=`<polygon points="${cx},${cy} ${e1} ${e2}" fill="#ece8e1" opacity=".06"/><line x1="${cx}" y1="${cy}" x2="${ec[0]}" y2="${ec[1]}" stroke="#f0a24b" stroke-width=".35" stroke-dasharray="1 .8"/>
-  <g class="drag" data-drag="cam" transform="translate(${cx} ${cy}) rotate(${dir<0?tilt:-tilt}) scale(${dir<0?-1:1} 1)"><circle r="5" fill="transparent"/>${selRing('cam',4.4)}<rect x="-2.6" y="-1.8" width="4.6" height="3.6" rx=".6" fill="#ece8e1"/><rect x="2" y="-1.1" width="2" height="2.2" fill="#ece8e1"/></g>`;
+  cam=`<polygon points="${cx},${cy} ${e1} ${e2}" fill="#e4e9e7" opacity=".06"/><line x1="${cx}" y1="${cy}" x2="${ec[0]}" y2="${ec[1]}" stroke="#3dff8f" stroke-width=".35" stroke-dasharray="1 .8"/>
+  <g class="drag" data-drag="cam" transform="translate(${cx} ${cy}) rotate(${dir<0?tilt:-tilt}) scale(${dir<0?-1:1} 1)"><circle r="5" fill="transparent"/>${selRing('cam',4.4)}<rect x="-2.6" y="-1.8" width="4.6" height="3.6" rx=".6" fill="#e4e9e7"/><rect x="2" y="-1.1" width="2" height="2.2" fill="#e4e9e7"/></g>`;
  } else {
-  cam=`<g class="drag" data-drag="cam" transform="translate(${cx} ${cy}) rotate(${c.roll})" opacity=".92"><circle r="5" fill="transparent"/>${selRing('cam',4.4)}<rect x="-3" y="-2" width="6" height="4" rx=".7" fill="none" stroke="#ece8e1" stroke-width=".6"/><circle r="1.1" fill="none" stroke="#ece8e1" stroke-width=".5"/></g>`;
+  cam=`<g class="drag" data-drag="cam" transform="translate(${cx} ${cy}) rotate(${c.roll})" opacity=".92"><circle r="5" fill="transparent"/>${selRing('cam',4.4)}<rect x="-3" y="-2" width="6" height="4" rx=".7" fill="none" stroke="#e4e9e7" stroke-width=".6"/><circle r="1.1" fill="none" stroke="#e4e9e7" stroke-width=".5"/></g>`;
  }
- return `<rect x="1" y="1" width="98" height="${GY+3}" rx="3" fill="#1b1a1f" stroke="#33313a" stroke-width=".3"/>${bg}${g}
-  <rect x="1" y="${GY}" width="98" height="3" fill="#2a2830"/>${subs}${L}${cam}
+ return `<rect x="1" y="1" width="98" height="${GY+3}" rx="3" fill="#1a1f1d" stroke="#313a36" stroke-width=".3"/>${bg}${g}
+  <rect x="1" y="${GY}" width="98" height="3" fill="#28302d"/>${subs}${L}${cam}
   <text x="${cx}" y="${Math.max(4,cy-4)}" text-anchor="middle" class="svm">${ax==='y'?tilt+'°':c.roll?c.roll+'° roulis':''}</text>
   <text x="97" y="${GY+2.3}" text-anchor="end" class="svm">${ax==='x'?'VUE X · FACE':'VUE Y · CÔTÉ ← fond'}</text>`;
 }
@@ -245,7 +247,7 @@ function renderPop(){const el=$('#pop');if(!POP){el.hidden=true;return}
 function syncPopOutputs(){$$('#pop [data-out]').forEach(o=>{const k=o.dataset.out,v=get(k);if(k==='camera.z'||k.endsWith('.z'))o.textContent=(+v).toFixed(k==='camera.z'?2:1)+' m'});$$('#pop input[type=range][data-k$=".z"]').forEach(i=>i.value=get(i.dataset.k))}
 
 /* ================= VISEUR ================= */
-function renderFinder(){
+function renderFinder(fid='#finder',cid='#finderCap',pre='f'){const fEl=$(fid);
  const [ra,rb]=S.render.ratio.split(':').map(Number),W=100,H=Math.round(100*rb/ra*10)/10,c=S.camera,T=target();
  const fr=FRAMING[c.framing],tilt=camTilt(),fov=fovDeg()*Math.PI/180;
  const bl=(c.ap<=1.8?4:c.ap<=2.8?3:c.ap<=5.6?1.5:.3)*(fr.k>2?1.3:1)*(LENS[c.lens].f>=85?1.2:1);
@@ -263,24 +265,24 @@ function renderFinder(){
  const subs=S.subjects.map((s,i)=>{const rel=[s.x-c.x,s.y-c.y],dp=Math.max(.3,rel[0]*f[0]+rel[1]*f[1]),lat=rel[0]*r[0]+rel[1]*r[1];
   const a=Math.atan2(lat,dp),sx=W/2+(a/(fov/2))*(W/2),k=pd/dp,hpx=subH(s)*pm*k,sc=hpx/100,gy=hy+(ground-hy)*k;
   const sh=SHAPES[s.kind];
-  return {dp,svg:`<path d="${sh.d}" transform="translate(${sx.toFixed(1)} ${(gy-hpx).toFixed(1)}) scale(${sc.toFixed(3)})" fill="url(#fg)" ${rim?`stroke="${lightColor(rim)}" stroke-opacity=".9" stroke-width="${(1.1/sc).toFixed(2)}"`:''}/>`}}).sort((a,b)=>b.dp-a.dp).map(o=>o.svg).join('');
+  return {dp,svg:`<path d="${sh.d}" transform="translate(${sx.toFixed(1)} ${(gy-hpx).toFixed(1)}) scale(${sc.toFixed(3)})" fill="url(#${pre}g)" ${rim?`stroke="${lightColor(rim)}" stroke-opacity=".9" stroke-width="${(1.1/sc).toFixed(2)}"`:''}/>`}}).sort((a,b)=>b.dp-a.dp).map(o=>o.svg).join('');
  const n={none:0,few:5,medium:11,dense:20}[S.crowd];let crowd='';
- for(let i=0;i<n;i++){const x=((i*37+11)%100),hh=H*(.09+((i*7)%5)/60)*(fr.k>2?1.8:1),y=hy+H*.06;crowd+=`<path d="${SHAPES.person.d}" transform="translate(${x} ${y-hh}) scale(${hh/100})" fill="#1b1a20" opacity=".75"/>`}
+ for(let i=0;i<n;i++){const x=((i*37+11)%100),hh=H*(.09+((i*7)%5)/60)*(fr.k>2?1.8:1),y=hy+H*.06;crowd+=`<path d="${SHAPES.person.d}" transform="translate(${x} ${y-hh}) scale(${hh/100})" fill="#1a201d" opacity=".75"/>`}
  const tt=TIME[S.time];
  const night=S.time==='night'?.5:S.time==='blue'?.28:0;
  const tint=S.temp>0?`rgba(255,150,60,${(S.temp/100*.16).toFixed(3)})`:`rgba(80,140,255,${(-S.temp/100*.16).toFixed(3)})`;
  const sw=BGM[S.bg]?.sw||'#333';
- $('#finder').setAttribute('viewBox',`0 0 ${W} ${H}`);
- $('#finder').innerHTML=`<defs><linearGradient id="fg" x1="${g1}" y1="0" x2="${1-g1}" y2="0"><stop offset="0" stop-color="${kd&&kd.a<112?kc:'#2a2830'}" stop-opacity="${kd&&kd.a<112?.85:1}"/><stop offset="${kd&&kd.sign===0?1:.55}" stop-color="#3b3942"/><stop offset="1" stop-color="#16151a"/></linearGradient>
-  <filter id="fb" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(bl*.25).toFixed(2)}"/></filter></defs>
+ fEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+ fEl.innerHTML=`<defs><linearGradient id="${pre}g" x1="${g1}" y1="0" x2="${1-g1}" y2="0"><stop offset="0" stop-color="${kd&&kd.a<112?kc:'#28302d'}" stop-opacity="${kd&&kd.a<112?.85:1}"/><stop offset="${kd&&kd.sign===0?1:.55}" stop-color="#38433e"/><stop offset="1" stop-color="#151a18"/></linearGradient>
+  <filter id="${pre}b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(bl*.25).toFixed(2)}"/></filter></defs>
   <g transform="rotate(${c.roll} ${W/2} ${H/2})"><g transform="translate(${W/2} ${H/2}) scale(${c.roll?1.25:1}) translate(${-W/2} ${-H/2})">
   <foreignObject x="-6" y="-6" width="${W+12}" height="${H+12}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background:${sw};filter:blur(${bl}px)"></div></foreignObject>
   ${studio?'':`<rect x="-10" y="${hy}" width="${W+20}" height="${H*2}" fill="#000" opacity=".22"/><line x1="-10" y1="${hy}" x2="${W+10}" y2="${hy}" stroke="#fff" stroke-opacity=".12" stroke-width=".3"/>`}
-  <g filter="url(#fb)">${crowd}</g>${subs}</g></g>
-  <rect width="${W}" height="${H}" fill="${tint}"/>${night?`<rect width="${W}" height="${H}" fill="#050814" opacity="${night}"/>`:''}
+  <g filter="url(#${pre}b)">${crowd}</g>${subs}</g></g>
+  <rect width="${W}" height="${H}" fill="${tint}"/>${night?`<rect width="${W}" height="${H}" fill="#0b0e0d" opacity="${night}"/>`:''}
   ${tt.sun>-5&&tt.sun<20&&!studio?`<rect width="${W}" height="${H}" fill="${tt.c}" opacity=".12"/>`:''}
   <g stroke="#fff" stroke-opacity=".22" stroke-width=".25"><line x1="${W/3}" y1="0" x2="${W/3}" y2="${H}"/><line x1="${W*2/3}" y1="0" x2="${W*2/3}" y2="${H}"/><line x1="0" y1="${H/3}" x2="${W}" y2="${H/3}"/><line x1="0" y1="${H*2/3}" x2="${W}" y2="${H*2/3}"/></g>`;
- $('#finderCap').innerHTML=`<span>${LENS[c.lens].f} mm · f/${c.ap} · ${S.render.ratio}</span><span>${esc(fr.fr)} · ${esc(angleInfo().fr)}</span>`;
+ $(cid).innerHTML=`<span>${LENS[c.lens].f} mm · f/${c.ap} · ${S.render.ratio}</span><span>${esc(fr.fr)} · ${esc(angleInfo().fr)}</span>`;
 }
 
 /* ================= PROMPT ================= */
@@ -299,9 +301,9 @@ function subjPos(s){const c=S.camera,T=target(),fx=T.x-c.x,fy=T.y-c.y,fl=Math.hy
  const side=lat<-4?'on the left':lat>4?'on the right':'in the center';const depth=dp>ref*1.15?', in the background':dp<ref*.85?', in the foreground':'';
  return {en:side+depth,fr:(lat<-4?'à gauche':lat>4?'à droite':'au centre')+(dp>ref*1.15?', au fond':dp<ref*.85?', devant':'')}}
 function refList(){const out=[];
- DECORSLOTS.forEach(d=>{if(R['d.'+d[0]])out.push({key:'d.'+d[0],en:d[3]})});
- if(R['l.ref'])out.push({key:'l.ref',en:'lighting reference'});
- S.subjects.forEach((s,i)=>REFSLOTS[s.kind].forEach(r=>{const k=`s${s.id}.${r[0]}`;if(R[k])out.push({key:k,en:`subject ${i+1}, ${REFLABEL_EN[r[0]]}`})}));
+ DECORSLOTS.forEach(d=>{if(R['d.'+d[0]])out.push({key:'d.'+d[0],en:d[3],fr:'Décor · '+d[1],file:'decor_'+d[1]})});
+ if(R['l.ref'])out.push({key:'l.ref',en:'lighting reference',fr:'Référence lumière',file:'lumiere_reference'});
+ S.subjects.forEach((s,i)=>REFSLOTS[s.kind].forEach(r=>{const k=`s${s.id}.${r[0]}`;if(R[k])out.push({key:k,en:`subject ${i+1}, ${REFLABEL_EN[r[0]]}`,fr:`Sujet ${i+1} · ${r[1]}`,file:`sujet${i+1}_${r[1]}`})}));
  return out}
 function parts(){
  const c=S.camera,r=S.render,P={},fr=FRAMING[c.framing].en,n=S.subjects.length;
@@ -326,13 +328,15 @@ function parts(){
  return P;
 }
 const NEG='blurry, low resolution, distorted hands, extra fingers, deformed face, watermark, text, logo artifacts, oversaturated, plastic skin, cartoon';
-function buildPrompt(){
- const P=parts(),m=MODELS[S.render.model],r=S.render,refs=refList();
+function hasFrench(){const t=[S.bgNote,...Object.values(S.notes),...S.lights.map(l=>l.note||''),...S.subjects.flatMap(s=>[s.desc,s.product,s.vcolor,...Object.values(s.notes||{})])].join(' ');return t.trim().length>0}
+function buildPrompt(names,model){
+ const P=parts(),mk=model||S.render.model,m=MODELS[mk],r=S.render,refs=refList();
  if(m.kind==='natural'){
   let t=`${P.subject}, ${P.setting}, ${P.time}.\n\nLighting: ${P.lights.join('; ')}.\n\n${cap(P.camera)}. ${cap(P.look)}.\n\n${cap(P.style)}.`;
-  if(S.render.model!=='flux')t+=` Aspect ratio ${r.ratio}.`;
+  if(mk!=='flux')t+=` Aspect ratio ${r.ratio}.`;
   t+=' Avoid text, watermarks and distorted anatomy.';
-  if(refs.length)t+=`\n\nReference images (attached in this order): ${refs.map((x,i)=>`[${i+1}] ${x.en}`).join('; ')}. Reproduce faces, clothing, products and set elements from these references faithfully.`;
+  if(hasFrench())t+=' Some details are written in French: interpret them accurately.';
+  if(refs.length)t+=`\n\nReference images (attached in this order): ${refs.map((x,i)=>`[${i+1}] ${names&&names[i]?names[i]+' = ':''}${x.en}`).join('; ')}. Reproduce faces, clothing, products and set elements from these references faithfully.`;
   return {main:t,neg:null,refs};
  }
  if(m.kind==='mj')return {main:[P.subject,P.setting,P.time,...P.lights,P.camera,P.look,P.style].join(', ')+` --ar ${r.ratio} --style raw --no text, watermark, deformed hands`,neg:null,refs};
@@ -380,7 +384,8 @@ function readImage(file,key){if(!file||!file.type.startsWith('image/'))return;co
 document.addEventListener('click',e=>{
  const t=e.target.closest('button,[data-lsel]');if(!t)return;const d=t.dataset;
  if(d.unslot){e.preventDefault();delete R[d.unslot];saveRefs();renderPanel();renderPrompt();return}
- if(d.tab){if(d.tab!==S.tab)bgQ='';S.tab=d.tab;if(t.closest('#pop'))POP=null;all();return}
+ if(d.tab==='export'){POP=null;showScreen('export');return}
+ if(d.tab){if(SCREEN!=='editor')showScreen('editor');if(d.tab!==S.tab)bgQ='';S.tab=d.tab;if(t.closest('#pop'))POP=null;all();return}
  if(d.view){S.view=d.view;POP=null;renderPop();renderStage();save();return}
  if(d.popclose!==undefined){POP=null;renderPop();renderStage();renderPanel();return}
  if(d.set){if(d.set==='camera.angle')applyAngle(d.val);else set(d.set,d.val);if(d.set==='bgCat'||d.set==='madaReg'){bgQ=''}

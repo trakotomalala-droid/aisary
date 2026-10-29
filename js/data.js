@@ -5,7 +5,7 @@
  */
 /* ================= BIBLIOTHÈQUES DE PRESETS — AIsary ================= */
 const D=arr=>{const o={};for(const a of arr){const [k,fr,en,ic,x]=a;o[k]=Object.assign({fr,en,ic},x||{})}return o};
-const G=groups=>{const g={};for(const n in groups)g[n]=D(groups[n]);return g};
+const GRP=groups=>{const g={};for(const n in groups)g[n]=D(groups[n]);return g};
 const flat=g=>Object.assign({},...Object.values(g));
 
 /* ---------- DÉCOR ---------- */
@@ -130,7 +130,7 @@ const MOOD = D([
 ]);
 
 /* ---------- LUMIÈRES ---------- */
-const LTYPE = G({
+const LTYPE = GRP({
  'Studio':[
   ['softbox','Softbox','large rectangular softbox','square',{q:'soft'}],
   ['octa','Octabox','octabox','octagon',{q:'soft, wrapping'}],
@@ -253,7 +253,7 @@ const HAIR = D([
  ['afro','Afro','natural afro hair','cloud'],['shaved','Rasé','shaved head','circle'],['bun','Chignon','hair in a neat bun','circle-dot'],['ponytail','Queue de cheval','ponytail','wind'],
  ['scarf','Foulard / hijab','hair covered by a headscarf','shield'],['hat','Chapeau','wearing a hat','hard-hat'],
 ]);
-const OUTFIT = G({
+const OUTFIT = GRP({
  'Quotidien':[['casual','Jean & t-shirt','wearing casual jeans and a t-shirt','shirt'],['summer','Robe légère','wearing a light summer dress','shirt'],['street','Streetwear','wearing trendy streetwear','shirt'],['smartc','Smart casual','wearing a smart casual outfit','shirt'],['home','Tenue d’intérieur','wearing comfortable homewear','home']],
  'Professionnel':[['business','Costume business','wearing a modern business suit','briefcase'],['office','Chemise & pantalon','wearing a crisp white shirt and tailored trousers','briefcase'],['doctor','Blouse médicale','wearing a white medical coat','stethoscope'],['chef','Tenue de chef','wearing a chef’s jacket and apron','chef-hat'],['worker','Chantier (casque, gilet)','wearing a hard hat and hi-vis safety vest','hard-hat'],['farmer','Agriculteur','wearing practical farm clothes and a straw hat','sprout'],['mechanic','Mécanicien','wearing mechanic overalls','wrench'],['teacher','Enseignant','wearing a teacher’s smart outfit','graduation-cap']],
  'Traditionnel':[['lamba','Lamba blanc','wearing a traditional white Malagasy lamba draped over the shoulders','flower'],['hoany','Lamba hoany coloré','wearing a colorful printed Malagasy lamba hoany','flower'],['salovana','Salovana','wearing a traditional Malagasy salovana wrap','flower'],['satroka','Chapeau de paille malgache','wearing a traditional woven Malagasy straw hat','flower'],['boubou','Boubou africain','wearing a vibrant African boubou','flower']],
@@ -268,7 +268,7 @@ const EXPR = D([
  ['serene','Serein','calm, serene expression','leaf'],['charisma','Charismatique','charismatic, intense gaze','eye'],['tired','Fatigué','tired expression','battery-low'],
  ['worried','Inquiet','worried expression','frown'],['angry','En colère','angry expression','angry'],['love','Amoureux','loving, tender expression','heart'],
 ]);
-const POSE = G({
+const POSE = GRP({
  'Basique':[['standing','Debout','standing','person-standing'],['sitting','Assis','sitting','armchair'],['walking','En marche','walking toward the camera','footprints'],['lookcam','Regard caméra','looking directly into the lens','eye'],['profile','De profil','in profile','user'],['back','De dos','seen from behind','undo-2'],['crossed','Bras croisés','arms crossed','x'],['pockets','Mains dans les poches','hands in pockets','hand'],['lean','Appuyé au mur','leaning against a wall','align-start-vertical'],['lying','Allongé','lying down','bed']],
  'Action & sport':[['running','Court','running dynamically','footprints'],['jump','Saute','jumping in mid-air','arrow-up'],['kick','Frappe le ballon','kicking a football','volleyball'],['dribble','Dribble','dribbling a basketball','dribbble'],['dance','Danse','dancing energetically','music'],['lift','Soulève des poids','lifting weights','dumbbell'],['yogap','Posture de yoga','holding a yoga pose','heart-pulse'],['ride','À vélo / moto','riding a bike','bike']],
  'Avec le produit':[['holding','Tient le produit','holding the product near the face','package'],['drink','Boit','drinking from the product','cup-soda'],['eat','Mange','eating with delight','utensils'],['phone','Utilise son téléphone','using a smartphone','smartphone'],['showing','Montre à la caméra','showing the product to the camera','hand'],['pointing','Pointe du doigt','pointing at the product','pointer']],
@@ -328,7 +328,7 @@ const STYLE = D([
 ]);
 const MODELS = {
  gemini:{n:'Gemini',s:'Nano Banana / Imagen',kind:'natural',refs:true},
- gpt:{n:'GPT Image',s:'OpenAI',kind:'natural',refs:true},
+ gpt:{n:'ChatGPT',s:'GPT Image · OpenAI',kind:'natural',refs:true},
  flux:{n:'Flux',s:'Black Forest Labs',kind:'natural',refs:true},
  mj:{n:'Midjourney',s:'paramètres --ar',kind:'mj',refs:false},
  sd:{n:'Stable Diffusion',s:'SDXL, tags + négatif',kind:'sd',refs:false},

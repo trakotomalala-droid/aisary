@@ -121,4 +121,4 @@ function subjectSections(s){const p=`subjects.${s.id}.`,id='s'+s.id;let h='';
  h+=sec(id+'.free','pencil','Détails libres',s.desc?'Rempli':'Vide',`<textarea id="sd${s.id}" data-k="${p}desc" placeholder="Tout ce que les menus ne disent pas : une histoire, une attitude, un détail…">${esc(s.desc)}</textarea>`,false);
  return h;
 }
-all();
+

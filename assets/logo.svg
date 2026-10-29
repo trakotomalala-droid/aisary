@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512">
- <defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd38a"/><stop offset=".55" stop-color="#f0a24b"/><stop offset="1" stop-color="#e0602e"/></linearGradient>
- <radialGradient id="ab" cx=".3" cy=".25" r=".9"><stop offset="0" stop-color="#2c2a33"/><stop offset="1" stop-color="#121116"/></radialGradient></defs>
+ <defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4ffe5"/><stop offset=".55" stop-color="#3dff8f"/><stop offset="1" stop-color="#00b35c"/></linearGradient>
+ <radialGradient id="ab" cx=".3" cy=".25" r=".9"><stop offset="0" stop-color="#2a332f"/><stop offset="1" stop-color="#121514"/></radialGradient></defs>
  <rect x="1" y="1" width="46" height="46" rx="13" fill="url(#ab)"/>
  <rect x="1.5" y="1.5" width="45" height="45" rx="12.5" fill="none" stroke="url(#ag)" stroke-opacity=".35"/>
  <circle cx="24" cy="24" r="15" fill="none" stroke="url(#ag)" stroke-width="2.4"/>
  <g stroke="url(#ag)" stroke-width="2.2" stroke-linecap="round"><line x1="24.00" y1="9.00" x2="37.31" y2="17.70"/><line x1="36.99" y1="16.50" x2="36.11" y2="32.38"/><line x1="36.99" y1="31.50" x2="22.80" y2="38.67"/><line x1="24.00" y1="39.00" x2="10.69" y2="30.30"/><line x1="11.01" y1="31.50" x2="11.89" y2="15.62"/><line x1="11.01" y1="16.50" x2="25.20" y2="9.33"/></g>
- <path d="M24 17.2Q24.9 23.1 30.8 24Q24.9 24.9 24 30.8Q23.1 24.9 17.2 24Q23.1 23.1 24 17.2Z" fill="#fff8ea"/>
- <circle cx="33.5" cy="14.5" r="1.6" fill="#fff8ea" opacity=".9"/>
+ <path d="M24 17.2Q24.9 23.1 30.8 24Q24.9 24.9 24 30.8Q23.1 24.9 17.2 24Q23.1 23.1 24 17.2Z" fill="#f2fff7"/>
+ <circle cx="33.5" cy="14.5" r="1.6" fill="#f2fff7" opacity=".9"/>
 </svg>
