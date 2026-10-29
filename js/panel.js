@@ -94,11 +94,13 @@ function subjectSections(s){const p=`subjects.${s.id}.`,id='s'+s.id;let h='';
    <div class="row2"><div class="field"><label class="lab" for="so${s.id}">Origine / casting</label><select id="so${s.id}" data-k="${p}origin" data-rerender>${opts(ORIGIN,s.origin)}</select></div>
    <div class="field"><label class="lab" for="sm${s.id}">Morphologie</label><select id="sm${s.id}" data-k="${p}morpho">${opts(MORPHO,s.morpho)}</select></div></div>
    ${N('id','Précisez : barbe courte, taches de rousseur, sourire avec fossettes…')}${refRow(SR(s,['faceF','faceP','faceB']))}`,true);
-  h+=sec(id+'.hair','scissors','Cheveux',HAIR[s.hair].fr,`${chips(p+'hair',HAIR)}${N('hair','Précisez : tresses fines avec perles, cheveux gris…')}${refRow(SR(s,['hairR']))}`,false);
-  h+=sec(id+'.outfit','shirt','Tenue',flat(OUTFIT)[s.outfit].fr,`${groups(p+'outfit',OUTFIT)}${N('outfit','Précisez : chemise en wax jaune, maillot des Barea…')}${refRow(SR(s,['top','bottom','shoes']))}`,false);
-  h+=sec(id+'.acc','glasses','Accessoires',acc.length?acc.map(a=>ACCESS[a].fr).join(', '):'Aucun',`<div class="chips">${Object.entries(ACCESS).map(([k,v])=>`<button class="chip" data-toggle="${p}acc" data-val="${k}" aria-pressed="${acc.includes(k)}">${ic(v.ic)}<span>${esc(v.fr)}</span></button>`).join('')}</div>${N('acc','Précisez : montre dorée au poignet gauche, sac en raphia…')}${refRow(SR(s,['acc']))}`,false);
+  const ov=overrides(s);
+  const ovr=(k,label)=>`<p class="ovr">${ic('info')}<span>Vos images et votre description remplacent la présélection ci-dessous.</span><label class="check"><input type="checkbox" data-k="${p}${k}" data-bool data-rerender ${s[k]?'checked':''}> ${label}</label></p>`;
+  h+=sec(id+'.hair','scissors','Cheveux',ov.hair&&!s.keepHair?'Selon vos références':HAIR[s.hair].fr,`${ov.hair?ovr('keepHair','Garder aussi la présélection'):''}<div class="${ov.hair&&!s.keepHair?'dimmed':''}">${chips(p+'hair',HAIR)}</div>${N('hair','Précisez : tresses fines avec perles, cheveux gris…')}${refRow(SR(s,['hairR']))}`,false);
+  h+=sec(id+'.outfit','shirt','Tenue',ov.outfit&&!s.keepOutfit?'Selon vos références':OUTFIT_ALL[s.outfit].fr,`${refRow(SR(s,['top','bottom','shoes']))}${N('outfit','Précisez : chemise en wax jaune, maillot des Barea…')}${ov.outfit?ovr('keepOutfit','Garder aussi la tenue présélectionnée'):''}<div class="${ov.outfit&&!s.keepOutfit?'dimmed':''}"><span class="lab">Présélection</span>${groups(p+'outfit',OUTFIT)}</div>`,false);
+  h+=sec(id+'.acc','glasses','Accessoires',acc.includes('none')?'Aucun accessoire':acc.length?acc.map(a=>ACCESS[a].fr).join(', '):'Non précisé',`<div class="chips"><button class="chip" data-toggle="${p}acc" data-val="none" aria-pressed="${acc.includes('none')}">${ic('ban')}<span>Aucun accessoire</span></button>${Object.entries(ACCESS).map(([k,v])=>`<button class="chip" data-toggle="${p}acc" data-val="${k}" aria-pressed="${acc.includes(k)}">${ic(v.ic)}<span>${esc(v.fr)}</span></button>`).join('')}</div>${N('acc','Précisez : montre dorée au poignet gauche, sac en raphia…')}${refRow(SR(s,['acc']))}`,false);
   h+=sec(id+'.expr','smile','Expression',EXPR[s.expression].fr,`${chips(p+'expression',EXPR)}${N('expr','Précisez : regard complice vers la caméra, rire aux éclats…')}`,false);
-  h+=sec(id+'.pose','person-standing','Pose',flat(POSE)[s.pose].fr,`${groups(p+'pose',POSE)}${N('pose','Précisez : main gauche sur l’épaule de son ami…')}${refRow(SR(s,['poseR']))}`,false);
+  h+=poseSection(s,id,p,N,['poseR'],ov.pose&&!s.posesSet);
  }
  if(s.kind==='product'){
   h+=sec(id+'.prod','package','Produit',s.product||'À décrire',`<input type="text" data-k="${p}product" value="${esc(s.product)}" placeholder="Ex. : une bouteille de jus de litchi en verre" aria-label="Produit">${N('prod','Précisez : gouttes de condensation, étiquette face caméra…')}${refRow(SR(s,['front','backP','logo','pack']))}`,true);
@@ -118,7 +120,15 @@ function subjectSections(s){const p=`subjects.${s.id}.`,id='s'+s.id;let h='';
  if(s.kind==='object'){
   h+=sec(id+'.obj','box','Objet / élément',s.desc?'Décrit':'À décrire',`${N('obj','Décrivez : une soubique en vannerie, une lampe tempête…')}${refRow(SR(s,['refO','refO2']))}`,true);
  }
+ if(s.kind!=='person'&&s.kind!=='object')h+=poseSection(s,id,p,N,[],false);
  h+=sec(id+'.free','pencil','Détails libres',s.desc?'Rempli':'Vide',`<textarea id="sd${s.id}" data-k="${p}desc" placeholder="Tout ce que les menus ne disent pas : une histoire, une attitude, un détail…">${esc(s.desc)}</textarea>`,false);
  return h;
 }
 
+
+function poseSection(s,id,p,N,refs,overridden){const title=s.kind==='person'?'Pose':s.kind==='product'?'Présentation':s.kind==='vehicle'?'Angle & action':'Pose';
+ return sec(id+'.pose','person-standing',title,overridden?'Selon vos références':poseSummary(s),`
+  ${overridden?`<p class="ovr">${ic('info')}<span>Votre image ou votre description de pose remplace la présélection. Choisissez une pose dans la bibliothèque pour la combiner.</span></p>`:''}
+  <div class="posepick"><div class="pminis">${poseThumbs(s)||'<span class="hint">Aucune pose choisie</span>'}</div>
+  <button class="btn primary" data-poses="${s.id}">${ic('layout-grid')}Ouvrir la bibliothèque de poses</button></div>
+  ${N('pose','Précisez : main gauche sur l’épaule de son ami…')}${refs.length?refRow(SR(s,refs)):''}`,true)}

@@ -5,7 +5,7 @@
  */
 /* ================= ÉTAT ================= */
 const SUBPOS=[[50,50],[38,53],[62,53]];
-function newSubject(id,kind,x,y){return {id,kind:kind||'person',x,y,gender:'woman',age:'25-35',origin:'highland',morpho:'average',hair:'braids',outfit:'hoany',expression:'smile',pose:'standing',acc:[],notes:{},animal:'maki',animAct:'look',vehicle:'city',vstate:'new',vcolor:'',fantasy:'dragon',product:'',surface:'wood',desc:''}}
+function newSubject(id,kind,x,y){return {id,kind:kind||'person',x,y,gender:'woman',age:'25-35',origin:'highland',morpho:'average',hair:'braids',outfit:'hoany',expression:'smile',pose:'standing',poses:['standing'],posesSet:false,acc:[],notes:{},animal:'maki',animAct:'look',vehicle:'city',vstate:'new',vcolor:'',fantasy:'dragon',product:'',surface:'wood',desc:''}}
 function mkLights(L){return L.map((a,i)=>({id:i+1,type:a[0],role:a[1],x:a[2],y:a[3],z:a[4],power:a[5],kelvin:a[6],gel:a[7]}))}
 function defaults(){return {v:2,tab:'decor',view:'z',bg:'foret',bgCat:'nature',madaReg:'tana',notes:{},bgNote:'',time:'golden',weather:'clear',climate:'est',temp:30,mood:'warm',
  lights:mkLights(KITS.rembrandt.L),kit:'rembrandt',kitCat:'portrait',lsel:1,customKits:[],
@@ -15,7 +15,7 @@ function defaults(){return {v:2,tab:'decor',view:'z',bg:'foret',bgCat:'nature',m
 let S; try{S=JSON.parse(localStorage.getItem('aisary-v2'))}catch(e){}
 const HAD_OLD=!!S;
 function normalize(X){if(!X||X.v!==2)X=defaults();const d=defaults();for(const k in d)if(X[k]===undefined)X[k]=d[k];
- X.notes=X.notes||{};X.adv=X.adv||{};X.madaReg=X.madaReg||'tana';if(X.bgCat==='mada')X.bgCat='nature';X.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[]});if(X.tab==='export')X.tab='decor';return X}
+ X.notes=X.notes||{};X.adv=X.adv||{};X.madaReg=X.madaReg||'tana';if(X.bgCat==='mada')X.bgCat='nature';X.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[];if(!Array.isArray(s.poses))s.poses=[typeof POSES!=='undefined'&&POSES[s.pose]?s.pose:'standing']});if(X.tab==='export')X.tab='decor';return X}
 S=normalize(S);
 let POP=null, bgQ='';
 let R={}; try{R=JSON.parse(localStorage.getItem('aisary-refs'))||{}}catch(e){R={}}
@@ -234,7 +234,7 @@ function renderPop(){const el=$('#pop');if(!POP){el.hidden=true;return}
   <div class="row-btns"><button class="btn small" data-dup="${o.id}">${ic('copy')}Dupliquer</button><button class="btn small ghost danger" data-del="${o.id}">${ic('trash-2')}Retirer</button></div>`}
  else {const i=S.subjects.indexOf(o);h=`<div class="pophd">${ic(KIND[o.kind].ic)}<b>Sujet ${i+1}</b><span class="sp"></span><button class="x" data-popclose aria-label="Fermer">${ic('x')}</button></div>
   <div class="field"><label class="lab" for="psk">Type</label><select id="psk" data-k="subjects.${o.id}.kind" data-rerender>${opts(KIND,o.kind)}</select></div>
-  ${o.kind==='person'?`<div class="row2"><div class="field"><label class="lab" for="pse">Expression</label><select id="pse" data-k="subjects.${o.id}.expression">${opts(EXPR,o.expression)}</select></div><div class="field"><label class="lab" for="psp">Pose</label><select id="psp" data-k="subjects.${o.id}.pose">${optsG(POSE,o.pose)}</select></div></div>
+  ${o.kind==='person'?`<div class="row2"><div class="field"><label class="lab" for="pse">Expression</label><select id="pse" data-k="subjects.${o.id}.expression">${opts(EXPR,o.expression)}</select></div><div class="field"><span class="lab">Pose</span><button class="btn small" data-poses="${o.id}">${ic('person-standing')}${esc(poseSummary(o))}</button></div></div>
   <div class="field"><label class="lab" for="pso">Tenue</label><select id="pso" data-k="subjects.${o.id}.outfit">${optsG(OUTFIT,o.outfit)}</select></div>`:''}
   ${o.kind==='product'?`<div class="field"><label class="lab" for="psr">Produit</label><input type="text" id="psr" data-k="subjects.${o.id}.product" value="${esc(o.product)}"></div>`:''}
   <div class="row-btns"><button class="btn small" data-tab="sujet">${ic('panel-left-open')}Menu sujet complet</button>${S.subjects.length>1?`<button class="btn small ghost danger" data-subdel="${o.id}">${ic('trash-2')}Retirer</button>`:''}</div>`}
@@ -288,14 +288,23 @@ function renderFinder(fid='#finder',cid='#finderCap',pre='f'){const fEl=$(fid);
 /* ================= PROMPT ================= */
 function subjDesc(s){
  if(s.kind==='person'){const g=GENDER[s.gender].en,age=AGE[s.age]||'';
-  const acc=(s.acc||[]).map(k=>ACCESS[k].en);
-  return [`a ${g}, ${age}, ${ORIGIN[s.origin].en}`,MORPHO[s.morpho].en,snt(s,'id'),withN(HAIR[s.hair].en,snt(s,'hair')),withN(flat(OUTFIT)[s.outfit].en,snt(s,'outfit')),acc.join(', '),snt(s,'acc'),withN(EXPR[s.expression].en,snt(s,'expr')),withN(flat(POSE)[s.pose].en,snt(s,'pose'))].filter(Boolean).join(', ').replace(/ +/g,' ')}
- if(s.kind==='product')return [`${s.product||'the product'} ${SURFACE[s.surface].en}`,snt(s,'prod'),snt(s,'surf')].filter(Boolean).join(', ');
- if(s.kind==='animal')return [`a ${ANIMAL[s.animal].en} ${ANIMACT[s.animAct].en}`,snt(s,'anim'),snt(s,'act')].filter(Boolean).join(', ');
- if(s.kind==='vehicle')return [`a ${s.vcolor?s.vcolor+' ':''}${VEHICLE[s.vehicle].en}, ${VSTATE[s.vstate].en}`,snt(s,'veh'),snt(s,'vst')].filter(Boolean).join(', ');
- if(s.kind==='fantasy')return withN(`a ${FANTASY[s.fantasy].en}`,snt(s,'fan'));
+  const acc=(s.acc||[]).includes('none')?'no accessories, no jewelry':(s.acc||[]).map(k=>ACCESS[k].en).join(', ');
+  const ov=overrides(s);
+  const outfit=ov.outfit&&!s.keepOutfit?[hasRef(s,['top','bottom','shoes'])?'wearing exactly the clothing shown in the reference images':'',snt(s,'outfit')].filter(Boolean).join(', '):withN(OUTFIT_ALL[s.outfit]?.en||'',snt(s,'outfit'));
+  const hair=ov.hair&&!s.keepHair?[hasRef(s,['hairR'])?'with the hairstyle shown in the reference image':'',snt(s,'hair')].filter(Boolean).join(', '):withN(HAIR[s.hair].en,snt(s,'hair'));
+  const pose=ov.pose&&!s.posesSet?[hasRef(s,['poseR'])?'in the pose shown in the reference image':'',snt(s,'pose')].filter(Boolean).join(', '):withN(poseEn(s),snt(s,'pose'));
+  return [`a ${g}, ${age}, ${ORIGIN[s.origin].en}`,MORPHO[s.morpho].en,snt(s,'id'),hair,outfit,acc,snt(s,'acc'),withN(EXPR[s.expression].en,snt(s,'expr')),pose].filter(Boolean).join(', ').replace(/ +/g,' ')}
+ if(s.kind==='product')return [`${s.product||'the product'} ${SURFACE[s.surface].en}`,snt(s,'prod'),snt(s,'surf'),poseEn(s),snt(s,'pose')].filter(Boolean).join(', ');
+ if(s.kind==='animal')return [`a ${ANIMAL[s.animal].en} ${ANIMACT[s.animAct].en}`,snt(s,'anim'),snt(s,'act'),poseEn(s),snt(s,'pose')].filter(Boolean).join(', ');
+ if(s.kind==='vehicle')return [`a ${s.vcolor?s.vcolor+' ':''}${VEHICLE[s.vehicle].en}, ${VSTATE[s.vstate].en}`,snt(s,'veh'),snt(s,'vst'),poseEn(s),snt(s,'pose')].filter(Boolean).join(', ');
+ if(s.kind==='fantasy')return [`a ${FANTASY[s.fantasy].en}`,snt(s,'fan'),poseEn(s),snt(s,'pose')].filter(Boolean).join(', ');
  return snt(s,'obj')||(s.desc?'':'a decorative object');
 }
+const OUTFIT_ALL=flat(OUTFIT);
+const hasRef=(s,keys)=>keys.some(k=>R[`s${s.id}.${k}`]);
+function overrides(s){return {outfit:hasRef(s,['top','bottom','shoes'])||!!snt(s,'outfit'),hair:hasRef(s,['hairR'])||!!snt(s,'hair'),pose:hasRef(s,['poseR'])||!!snt(s,'pose')}}
+function validPoses(s){const allowed=s.kind==='person'?null:{product:'pres',object:'pres',vehicle:'vang',animal:'ani',fantasy:'fant'}[s.kind];
+ return (s.poses||[]).filter(k=>POSES[k]&&(allowed?POSES[k].cat===allowed:!['pres','vang','ani','fant'].includes(POSES[k].cat)))}
 function subjPos(s){const c=S.camera,T=target(),fx=T.x-c.x,fy=T.y-c.y,fl=Math.hypot(fx,fy)||1,f=[fx/fl,fy/fl],r=[-f[1],f[0]];
  const rel=[s.x-c.x,s.y-c.y],dp=rel[0]*f[0]+rel[1]*f[1],lat=rel[0]*r[0]+rel[1]*r[1],ref=fl;
  const side=lat<-4?'on the left':lat>4?'on the right':'in the center';const depth=dp>ref*1.15?', in the background':dp<ref*.85?', in the foreground':'';
@@ -390,7 +399,7 @@ document.addEventListener('click',e=>{
  if(d.popclose!==undefined){POP=null;renderPop();renderStage();renderPanel();return}
  if(d.set){if(d.set==='camera.angle')applyAngle(d.val);else set(d.set,d.val);if(d.set==='bgCat'||d.set==='madaReg'){bgQ=''}
   if(/^subjects\.\d+\.kind$/.test(d.set)&&POP)renderPop();all();return}
- if(d.toggle){const arr=get(d.toggle)||[];const i=arr.indexOf(d.val);if(i<0)arr.push(d.val);else arr.splice(i,1);set(d.toggle,arr);all();return}
+ if(d.toggle){let arr=get(d.toggle)||[];const i=arr.indexOf(d.val);if(i<0){if(d.val==='none')arr=[];else arr=arr.filter(x=>x!=='none');arr.push(d.val)}else arr.splice(i,1);set(d.toggle,arr);all();return}
  if(d.kit){const k=S.customKits.find(x=>x.id===d.kit)||KITS[d.kit];S.lights=mkLights(k.L);S.kit=d.kit;S.lsel=1;POP=null;all();toast('Kit « '+k.fr+' » appliqué');return}
  if(d.kdel){S.customKits=S.customKits.filter(k=>k.id!==d.kdel);all();return}
  if(d.lsel){S.lsel=S.lsel==+d.lsel?0:+d.lsel;renderPanel();save();return}
