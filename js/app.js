@@ -145,7 +145,19 @@ function dofFr(){const a=S.camera.ap;return a<=2?'Faible profondeur de champ, fo
 /* ================= PLATEAU : VUES Z / X / Y ================= */
 const GY=56, ZS=10; // vues latérales : sol à y=56, 1 m = 10 unités
 const zy=z=>GY-z*ZS;
-function bgStrip(x,y,w,h,op){const sw=BGM[S.bg]?.sw||'#333';return `<foreignObject x="${x}" y="${y}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;border-radius:1.5px;background:${sw};opacity:${op}"></div></foreignObject>`}
+/* dégradés CSS -> dégradés SVG (le HTML dans un SVG s'affiche mal sur Mac/Safari) */
+function svgGrad(css,id){css=String(css||'#333');const m=/^(linear|radial)-gradient\((.*)\)$/.exec(css.trim());
+ if(!m)return {defs:'',fill:css};const parts=m[2].split(/,(?![^(]*\))/).map(s=>s.trim());let ang=180,cx=.5,cy=.5;
+ if(m[1]==='linear'&&/deg$/.test(parts[0]))ang=parseFloat(parts.shift());
+ if(m[1]==='radial'&&/^circle|^ellipse|at /.test(parts[0])){const q=/at\s+([\d.]+)%\s+([\d.]+)%/.exec(parts.shift());if(q){cx=q[1]/100;cy=q[2]/100}}
+ const st=parts.map((p,j)=>{const q=/^(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|[a-z]+)\s*([\d.]+%)?$/.exec(p)||[0,p,null];return [q[1],q[2]?parseFloat(q[2])/100:null]});
+ st.forEach((s,j)=>{if(s[1]===null)s[1]=j===0?0:j===st.length-1?1:null});
+ for(let j=1;j<st.length-1;j++)if(st[j][1]===null){let k=j;while(st[k][1]===null)k++;const a=st[j-1][1],b=st[k][1];for(let n=j;n<k;n++)st[n][1]=a+(b-a)*(n-j+1)/(k-j+1)}
+ const stops=st.map(s=>`<stop offset="${s[1].toFixed(3)}" stop-color="${s[0]}"/>`).join('');
+ if(m[1]==='radial')return {defs:`<radialGradient id="${id}" cx="${cx}" cy="${cy}" r=".75">${stops}</radialGradient>`,fill:`url(#${id})`};
+ const r=ang*Math.PI/180,dx=Math.sin(r)/2,dy=-Math.cos(r)/2;
+ return {defs:`<linearGradient id="${id}" x1="${(.5-dx).toFixed(3)}" y1="${(.5-dy).toFixed(3)}" x2="${(.5+dx).toFixed(3)}" y2="${(.5+dy).toFixed(3)}">${stops}</linearGradient>`,fill:`url(#${id})`}}
+function bgStrip(x,y,w,h,op,id='bgs'){const g=svgGrad(BGM[S.bg]?.sw,id);return `<defs>${g.defs}</defs><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="${g.fill}" opacity="${op}"/>`}
 function crowdDots(){const n={none:0,few:5,medium:12,dense:22}[S.crowd];let o='';for(let i=0;i<n;i++){const x=10+((i*37)%80),y=16+((i*23)%22);o+=`<circle cx="${x}" cy="${y}" r="1.4" fill="#5e7169" opacity=".7"/>`}return o}
 function selRing(key,r=4.8){return POP&&POP.key===key?`<circle r="${r}" fill="none" stroke="#e4e9e7" stroke-width=".45" stroke-dasharray="1 1"/>`:''}
 function viewZ(){
@@ -159,7 +171,7 @@ function viewZ(){
  const subs=S.subjects.map((s,i)=>{const fp=s.kind==='vehicle'?`<rect x="-19" y="-8" width="38" height="16" rx="3" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='animal'?`<ellipse rx="4.5" ry="2.4" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='product'||s.kind==='object'?`<rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx=".8" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:`<circle r="${s.kind==='fantasy'?5:3.4}" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/><circle cy="-.6" r="1.2" fill="#e4e9e7"/>`;
   return `<g class="drag" data-drag="s:${s.id}" transform="translate(${s.x} ${s.y})"><circle r="6" fill="transparent"/>${selRing('s:'+s.id,6)}${fp}<text y="${s.kind==='vehicle'?12:7.4}" text-anchor="middle" class="svl">${S.subjects.length>1?'Sujet '+(i+1):'Sujet'}</text></g>`}).join('');
  return `<rect x="1" y="1" width="98" height="98" rx="3" fill="#1a1f1d" stroke="#313a36" stroke-width=".3"/>${g}
-  ${bgStrip(8,3,84,4.5,.9)}<text x="50" y="11" text-anchor="middle" class="svm">FOND · ${esc((BGM[S.bg]?.fr||'').toUpperCase())}</text>${crowdDots()}
+  ${bgStrip(8,3,84,4.5,.9,'bgz')}<text x="50" y="11" text-anchor="middle" class="svm">FOND · ${esc((BGM[S.bg]?.fr||'').toUpperCase())}</text>${crowdDots()}
   <polygon points="${c.x},${c.y} ${p1} ${p2}" fill="#e4e9e7" opacity=".05"/><line x1="${c.x}" y1="${c.y}" x2="${T.x}" y2="${T.y}" stroke="#e4e9e7" stroke-width=".25" stroke-dasharray="1 1" opacity=".5"/>
   ${subs}${L}
   <g class="drag" data-drag="cam" transform="translate(${c.x} ${c.y}) rotate(${ang*180/Math.PI+90})"><circle r="6" fill="transparent"/>${selRing('cam')}<rect x="-3.2" y="-1.6" width="6.4" height="4" rx=".8" fill="#e4e9e7"/><rect x="-1.3" y="-3" width="2.6" height="1.6" fill="#e4e9e7"/><circle cy=".4" r="1.2" fill="#131715"/></g>
@@ -170,7 +182,7 @@ function sideShape(s,hx){const sh=SHAPES[s.kind],hm=subH(s),sc=hm*ZS/100,base=s.
 function viewSide(ax){ // ax 'x' = vue de face (horizontal = x), 'y' = vue de côté (horizontal = profondeur)
  const c=S.camera,T=target(),H=v=>ax==='x'?v.x:v.y;
  let g='';for(let m=0;m<=5;m++)g+=`<line x1="2" y1="${zy(m)}" x2="98" y2="${zy(m)}" stroke="#242b28" stroke-width=".2"/><text x="3" y="${zy(m)-.8}" class="svm" text-anchor="start">${m} m</text>`;
- const bg=ax==='x'?bgStrip(6,4,88,GY-4,.28):bgStrip(2,4,4,GY-4,.9);
+ const bg=ax==='x'?bgStrip(6,4,88,GY-4,.28,'bgx'):bgStrip(2,4,4,GY-4,.9,'bgy');
  const subs=S.subjects.map(s=>`<g class="drag" data-drag="s:${s.id}">${sideShape(s,H(s))}<rect x="${H(s)-5}" y="${zy(subH(s))}" width="10" height="${subH(s)*ZS}" fill="transparent"/></g>`).join('');
  let L='';S.lights.forEach(l=>{const col=lightColor(l),lx=H(l),ly=zy(l.z);
   L+=`<line x1="${lx}" y1="${ly}" x2="${H(T)}" y2="${zy(T.z)}" stroke="${col}" stroke-width=".35" opacity=".45"/><line x1="${lx}" y1="${ly}" x2="${lx}" y2="${GY}" stroke="#4f5f58" stroke-width=".25" stroke-dasharray=".8 .8"/>
@@ -276,7 +288,7 @@ function renderFinder(fid='#finder',cid='#finderCap',pre='f'){const fEl=$(fid);
  fEl.innerHTML=`<defs><linearGradient id="${pre}g" x1="${g1}" y1="0" x2="${1-g1}" y2="0"><stop offset="0" stop-color="${kd&&kd.a<112?kc:'#28302d'}" stop-opacity="${kd&&kd.a<112?.85:1}"/><stop offset="${kd&&kd.sign===0?1:.55}" stop-color="#38433e"/><stop offset="1" stop-color="#151a18"/></linearGradient>
   <filter id="${pre}b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(bl*.25).toFixed(2)}"/></filter></defs>
   <g transform="rotate(${c.roll} ${W/2} ${H/2})"><g transform="translate(${W/2} ${H/2}) scale(${c.roll?1.25:1}) translate(${-W/2} ${-H/2})">
-  <foreignObject x="-6" y="-6" width="${W+12}" height="${H+12}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background:${sw};filter:blur(${bl}px)"></div></foreignObject>
+  <filter id="${pre}bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${(bl*.35).toFixed(2)}"/></filter>${(g=>g.defs+`<rect x="-8" y="-8" width="${W+16}" height="${H+16}" fill="${g.fill}" filter="url(#${pre}bl)"/>`)(svgGrad(sw,pre+'bk'))}
   ${studio?'':`<rect x="-10" y="${hy}" width="${W+20}" height="${H*2}" fill="#000" opacity=".22"/><line x1="-10" y1="${hy}" x2="${W+10}" y2="${hy}" stroke="#fff" stroke-opacity=".12" stroke-width=".3"/>`}
   <g filter="url(#${pre}b)">${crowd}</g>${subs}</g></g>
   <rect width="${W}" height="${H}" fill="${tint}"/>${night?`<rect width="${W}" height="${H}" fill="#0b0e0d" opacity="${night}"/>`:''}

@@ -7,7 +7,7 @@
 let HOME_DEL=null;
 function ago(t){const s=(Date.now()-t)/1000;if(s<60)return 'à l’instant';if(s<3600)return 'il y a '+Math.floor(s/60)+' min';if(s<86400)return 'il y a '+Math.floor(s/3600)+' h';const d=Math.floor(s/86400);return d===1?'hier':d<30?'il y a '+d+' jours':new Date(t).toLocaleDateString('fr-FR')}
 function projThumb(p){const last=(p.results||[]).slice(-1)[0];if(last)return `<img src="${last.data}" alt="">`;
- if(p.thumb&&p.thumb.svg)return `<svg viewBox="${p.thumb.vb}" preserveAspectRatio="xMidYMid slice">${p.thumb.svg.replace(/id="fg"/g,'id="t'+p.id+'g"').replace(/url\(#fg\)/g,'url(#t'+p.id+'g)').replace(/id="fb"/g,'id="t'+p.id+'b"').replace(/url\(#fb\)/g,'url(#t'+p.id+'b)')}</svg>`;
+ if(p.thumb&&p.thumb.svg)return `<svg viewBox="${p.thumb.vb}" preserveAspectRatio="xMidYMid slice">${p.thumb.svg.replace(/id="f(\w+)"/g,'id="t'+p.id+'$1"').replace(/url\(#f(\w+)\)/g,'url(#t'+p.id+'$1)')}</svg>`;
  const sw=BGM[p.scene?.bg]?.sw||'#222';return `<div style="width:100%;height:100%;background:${sw}"></div>`}
 async function renderHome(){
  const el=$('#home');let list=[];try{list=await DB.all()}catch(e){}
