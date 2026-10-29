@@ -1,6 +1,6 @@
 [package]
 name = "aisary"
-version = "0.5.2"
+version = "0.5.3"
 description = "AIsary par Toky Rakotomalala : composez vos images IA comme sur un vrai plateau photo"
 authors = ["Toky Rakotomalala"]
 license = "GPL-3.0-or-later"
