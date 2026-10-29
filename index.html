@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AIsary</title>
+<meta name="description" content="AIsary par Toky Rakotomalala : composez vos images IA comme sur un vrai plateau photo. Logiciel libre créé à Madagascar.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/aisary.css">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button class="logo" id="aboutBtn" aria-label="À propos d'AIsary"><span id="brandSlot"></span></button>
+    <span class="tag">PROTOTYPE · V3</span>
+    <div class="sp"></div>
+    <button class="btn ghost" id="aboutBtn2" onclick="document.getElementById('aboutBtn').click()"><i data-lucide="info" class="ic"></i>À propos</button>
+    <button class="btn ghost" id="reset">Réinitialiser la scène</button>
+  </header>
+  <main>
+    <section class="col" aria-label="Réglages de la scène">
+      <nav class="tabs" role="tablist" id="tabs"></nav>
+      <div class="panel" id="panel"></div>
+    </section>
+
+    <section class="col" aria-label="Plateau">
+      <div class="stagehd">
+        <h2>Plateau</h2>
+        <div class="views" role="group" aria-label="Choix de la vue">
+          <button class="vbtn" data-view="z"><b>Z</b><span>Dessus</span></button>
+          <button class="vbtn" data-view="x"><b>X</b><span>Face</span></button>
+          <button class="vbtn" data-view="y"><b>Y</b><span>Côté</span></button>
+          <button class="vbtn" data-view="all"><i data-lucide="layout-grid" class="ic"></i><span>3 vues</span></button>
+        </div>
+        <div class="sp"></div>
+        <span class="hintbar"><i data-lucide="mouse-pointer-click" class="ic"></i>Glissez pour placer · cliquez pour régler</span>
+      </div>
+      <div id="stagewrap">
+        <svg id="vz" data-view="z" viewBox="0 0 100 100" aria-label="Vue de dessus du plateau"></svg>
+        <svg id="vx" data-view="x" viewBox="0 0 100 60" aria-label="Vue de face du plateau"></svg>
+        <svg id="vy" data-view="y" viewBox="0 0 100 60" aria-label="Vue de côté du plateau"></svg>
+        <div id="pop" hidden></div>
+      </div>
+      <div class="readout" id="readout"></div>
+    </section>
+
+    <section class="col" aria-label="Viseur et prompt">
+      <div class="out">
+        <h2><i data-lucide="scan" class="ic"></i>Viseur <small>Aperçu indicatif de la composition</small></h2>
+        <div class="finderbox"><svg id="finder" viewBox="0 0 100 125" aria-label="Aperçu du cadrage"></svg><div id="finderCap"></div></div>
+        <h2><i data-lucide="text-cursor-input" class="ic"></i>Prompt généré</h2>
+        <div id="prompt"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div id="overlay" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/mada.js"></script>
+<script src="js/app.js"></script>
+<script src="js/panel.js"></script>
+<script src="js/brand.js"></script>
+</body>
+</html>
