@@ -1,0 +1,26 @@
+[package]
+name = "aisary"
+version = "0.5.0"
+description = "AIsary par Toky Rakotomalala : composez vos images IA comme sur un vrai plateau photo"
+authors = ["Toky Rakotomalala"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/trakotomalala-droid/aisary"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

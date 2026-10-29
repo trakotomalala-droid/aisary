@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AIsary",
+  "version": "0.5.0",
+  "identifier": "mg.aisary.app",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "AIsary — par Toky Rakotomalala",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1000,
+        "minHeight": 660,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app", "nsis", "msi"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "Toky Rakotomalala",
+    "copyright": "Copyright © 2026 Toky Rakotomalala",
+    "category": "GraphicsAndDesign",
+    "shortDescription": "Composez vos images IA comme sur un vrai plateau photo",
+    "longDescription": "AIsary, créé à Madagascar par Toky Rakotomalala, aide les créatifs à composer une scène (décor, lumières, caméra, sujets) et écrit le prompt adapté au modèle d'image choisi.",
+    "license": "GPL-3.0-or-later",
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "nsis": {
+        "languages": ["French", "English"],
+        "displayLanguageSelector": false
+      },
+      "wix": {
+        "language": "fr-FR"
+      }
+    }
+  }
+}

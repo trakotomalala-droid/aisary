@@ -43,6 +43,7 @@ function aboutHTML(){return `<div class="wl-card about" role="dialog" aria-modal
   <dt>Version</dt><dd>${AISARY_VERSION}</dd>
   <dt>Créateur</dt><dd>Toky Rakotomalala, directeur artistique, Madagascar</dd>
   <dt>Licence</dt><dd>GNU GPL v3</dd>
+  <dt>Appli</dt><dd><a href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">Télécharger pour Mac et Windows</a></dd>
   <dt>Code</dt><dd><a href="https://github.com/trakotomalala-droid/aisary" target="_blank" rel="noopener">github.com/trakotomalala-droid/aisary</a></dd>
  </dl>
  <p>AIsary aide les créatifs à composer une scène (décor, lumière, caméra, sujets) et transforme ces choix en prompt précis pour les modèles d'image.</p>

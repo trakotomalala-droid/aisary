@@ -100,7 +100,7 @@ async function packFiles(pk){const f=[];const mk=MODELS[pk.model].n.split(' ')[0
  f.push(['scene.aisary',projectFileBlob({...PROJ,scene:S,refs:R})]);return f}
 
 /* ---------- dossier de dépôt ---------- */
-const FS_OK=typeof window.showDirectoryPicker==='function';
+let FS_OK=typeof window.showDirectoryPicker==='function';
 async function getRoot(ask){let h=null;try{h=await DB.kvGet('root')}catch(e){}
  if(h){try{let p=await h.queryPermission({mode:'readwrite'});if(p!=='granted'&&ask)p=await h.requestPermission({mode:'readwrite'});if(p==='granted')return h}catch(e){}}
  return ask?pickRoot():null}
@@ -190,8 +190,8 @@ function renderExport(){
    :`<h2>Exporter vers ${esc(MODELS[m].n)}</h2>
     <div class="xactions">
      <button class="btn primary huge" id="xFolder">${ic('folder-plus')}${FS_OK?'Créer le dossier du projet':'Télécharger le dossier (ZIP)'}</button>
-     ${FS_OK?`<p class="hint">Dossier de dépôt : <b>${esc(G.rootName||'pas encore choisi')}</b> · <button class="linkbtn" id="xRoot">changer</button> · <button class="linkbtn" id="xZip">ZIP plutôt</button></p>`:`<p class="hint">Pour écrire directement dans un dossier, utilisez Chrome ou Edge, ou l'appli AIsary.</p>`}
-     ${XP.last?`<p class="ok">${ic('circle-check')}${esc(XP.last)}</p>`:''}
+     ${FS_OK?`<p class="hint">Dossier de dépôt : <b>${esc(G.rootName||'pas encore choisi')}</b> · <button class="linkbtn" id="xRoot">changer</button> · <button class="linkbtn" id="xZip">ZIP plutôt</button></p>`:`<p class="hint">Pour écrire directement dans un dossier, utilisez Chrome ou Edge, ou <a href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">l'appli AIsary pour Mac et Windows</a>.</p>`}
+     ${XP.last?`<p class="ok">${ic('circle-check')}${esc(XP.last)}${XP.lastPath&&window.__TAURI__?` · <button class="linkbtn" id="xReveal">${navigator.platform.includes('Mac')?'Afficher dans le Finder':'Ouvrir le dossier'}</button>`:''}</p>`:''}
      <div class="envois">${pk.envois.map((e,i)=>`<div class="envoi"><span class="ebadge">${pk.envois.length>1?'Envoi '+(i+1):'Envoi'}</span><span class="efiles">${e.files.length?e.files.map(f=>f.name).join(', '):'texte seul'}</span><button class="btn small" data-copyenv="${i}">${ic('copy')}Copier le texte</button></div>`).join('')}</div>
      ${MODEL_LINK[m]?`<a class="btn huge outline" href="${MODEL_LINK[m][1]}" target="_blank" rel="noopener">${ic('external-link')}${MODEL_LINK[m][0]}</a>`:`<p class="hint">Ouvrez votre outil ${esc(MODELS[m].n)} habituel.</p>`}
      <ol class="howto"><li>${ic('copy')}<span>Copiez le texte de l'envoi</span></li><li>${ic('external-link')}<span>Ouvrez ${esc(MODELS[m].n)} et collez</span></li><li>${ic('images')}<span>Glissez les images numérotées, dans l'ordre</span></li></ol>

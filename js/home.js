@@ -20,7 +20,7 @@ async function renderHome(){
    <form class="newproj" id="newProjForm"><label class="lab" for="newProjName">Nouveau projet</label>
     <div class="newrow"><input type="text" id="newProjName" placeholder="Ex. : Voiture avec chauffeur" value="${nm}" autocomplete="off"><button class="btn primary" type="submit">${ic('plus')}Créer</button></div>
     <div class="row-btns"><label class="btn small ghost filebtn">${ic('folder-open')}Ouvrir un fichier .aisary<input type="file" id="openAisary" accept=".aisary,application/json" hidden></label>
-    <button class="btn small ghost" type="button" id="replayGuide">${ic('graduation-cap')}Revoir le guide</button></div>
+    <button class="btn small ghost" type="button" id="replayGuide">${ic('graduation-cap')}Revoir le guide</button>${window.__TAURI__?'':`<a class="btn small ghost" href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">${ic('monitor-down')}Télécharger l'appli Mac / Windows</a>`}</div>
    </form>
   </section>
   <section class="recents"><div class="rhd"><h2>Projets récents</h2><span class="hint">${list.length} projet${list.length>1?'s':''} · enregistrés dans ce navigateur</span></div>

@@ -37,9 +37,19 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 
 ## Utiliser AIsary
 
-- **Version web** : bientôt disponible à l'adresse `https://trakotomalala-droid.github.io/aisary/`.
+- **Version web** : [trakotomalala-droid.github.io/aisary](https://trakotomalala-droid.github.io/aisary/) (Chrome ou Edge recommandés).
+- **Applications Mac et Windows** : [télécharger la dernière version](https://github.com/trakotomalala-droid/aisary/releases/latest)
+  - Mac (Intel et Apple Silicon) : fichier `.dmg`. Au premier lancement, clic droit sur AIsary > Ouvrir. Si macOS dit que l'appli est endommagée : `xattr -cr /Applications/AIsary.app` dans le Terminal.
+  - Windows : fichier `-setup.exe`. Si Windows SmartScreen s'affiche : « Informations complémentaires » > « Exécuter quand même ».
 - **En local** : téléchargez ce dépôt et ouvrez `index.html` dans votre navigateur.
-- **Applications Mac et Windows** : en préparation.
+
+### Fabriquer les applications
+
+Les applications sont fabriquées automatiquement par GitHub Actions (Tauri) quand un tag de version est poussé :
+
+```bash
+git tag v0.5.0 && git push origin v0.5.0
+```
 
 ## Feuille de route
 
@@ -51,7 +61,7 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 - [x] Accueil, projets, enregistrement et réouverture des scènes (.aisary)
 - [x] Guide de démarrage et visite guidée
 - [ ] Vue 3D de la scène
-- [ ] Applications Mac et Windows
+- [x] Applications Mac et Windows (Tauri, fabrication automatique)
 - [ ] Export PSD par calques et vectoriel
 
 ## Contribuer
