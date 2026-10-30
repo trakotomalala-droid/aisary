@@ -12,7 +12,7 @@ const PERSEND_DEF={gemini:10,gpt:10,flux:4,mj:3,sd:2};
 const perSend=m=>Math.max(1,+(G.perSend[m]||PERSEND_DEF[m]||4));
 const keyFor=svc=>G.keys.find(k=>k.id===G.active[svc])||G.keys.find(k=>k.service===svc);
 const mask=k=>k.length>10?k.slice(0,4)+'••••••'+k.slice(-4):'••••';
-let XP={edited:null,model:null,busy:false,err:null,last:null};
+let XP={edited:null,model:null,busy:false,err:null,last:null,done:false};
 
 /* ---------- interrupteur de mode (en-tête) ---------- */
 function renderModeSwitch(){const el=$('#modeSwitch');if(!el)return;
@@ -44,7 +44,7 @@ async function addKeyFrom(p,statusEl){const svc=$('#'+p+'Svc').value,key=$('#'+p
  st.textContent='Test de la clé…';const k={id:'k'+Date.now(),service:svc,name,key};const ok=await testKey(k);
  G.keys.push(k);G.active[svc]=k.id;saveG();$('#'+p+'Key').value='';st.textContent=ok?'Clé valide et enregistrée.':'Clé enregistrée, mais le test a échoué : vérifiez-la ou votre connexion.';return true}
 document.addEventListener('click',async e=>{
- const t=e.target.closest('[data-mode],[data-keys],[data-addkey],[data-delkey],[data-testkey],[data-actkey],#exportBtn,[data-xmodel],[data-goto],#xRegen,[data-copyenv],#xFolder,#xZip,#xGen,#xRoot,[data-dlres],[data-saveres],[data-delres]');if(!t)return;const d=t.dataset;
+ const t=e.target.closest('[data-mode],[data-keys],[data-addkey],[data-delkey],[data-testkey],[data-actkey],#exportBtn,[data-xmodel],[data-goto],#xRegen,[data-copyenv],#xFolder,#xZip,#xGen,#xRoot,[data-dlres],[data-saveres],[data-delres],[data-upres],[data-openpj],[data-save]');if(!t)return;const d=t.dataset;
  if(d.mode){setMode(d.mode);return}
  if(d.keys!==undefined){openKeys();return}
  if(d.addkey){if(await addKeyFrom(d.addkey,d.addkey==='k'?'#kStatus':'#gStatus')){if(d.addkey==='k')openKeys();renderModeSwitch()}return}
@@ -63,8 +63,11 @@ document.addEventListener('click',async e=>{
  if(d.dlres){const r=PROJ.results.find(x=>x.id===d.dlres);downloadBlob(await (await fetch(r.data)).blob(),slug(PROJ.name)+'_'+r.id+'.'+(r.data.includes('png')?'png':'jpg'));return}
  if(d.saveres){const r=PROJ.results.find(x=>x.id===d.saveres);saveResultToFolder(r);return}
  if(d.delres){PROJ.results=PROJ.results.filter(x=>x.id!==d.delres);scheduleProjSave();renderExport();return}
+ if(d.upres){const r=PROJ.results.find(x=>x.id===d.upres);await saveProjNow();showScreen('upscale');upAddData(r.data,slug(PROJ.name)+'_'+r.id);return}
+ if(d.openpj!==undefined){openAttachments();return}
+ if(d.save!==undefined){saveProjectExplicit();return}
 });
-document.addEventListener('change',e=>{const s=e.target.dataset&&e.target.dataset.gmodel;if(s){G.models[s]=e.target.value;saveG();if(SCREEN==='export')renderExport()}
+document.addEventListener('change',e=>{if(e.target.id==='xImport'&&e.target.files[0]){importGenerated(e.target.files[0]);return}const s=e.target.dataset&&e.target.dataset.gmodel;if(s){G.models[s]=e.target.value;saveG();if(SCREEN==='export')renderExport()}
  if(e.target.id==='xPer'){G.perSend[S.render.model]=+e.target.value||1;saveG();renderExport()}});
 document.addEventListener('input',e=>{if(e.target.id==='xPrompt'){XP.edited=e.target.value;$('#xWords').textContent=e.target.value.split(/\s+/).filter(Boolean).length+' mots · modifié'}});
 
@@ -78,17 +81,20 @@ function buildPack(){const m=S.render.model,refs=refList(),names=refs.map((r,i)=
   else if(i===0)t=`This request is split into ${N} messages because of the image limit. Do not generate yet: wait for message ${N}.\n\n`+text;
   else t=`Message ${i+1}/${N}: additional reference images for the same scene: ${c.map(x=>`[${x.n}] ${x.name}`).join('; ')}.`+(i===N-1?' All references are now sent: generate the image described in the first message.':' Do not generate yet.');
   return {text:t,files:c}});
- return {model:m,text,neg,refs:refs.map((r,j)=>({...r,name:names[j]})),envois}}
+ return {model:m,text,neg,refs:refs.map((r,j)=>({...r,name:names[j],n:j+1})),envois}}
 function readme(pk){const L=MODEL_LINK[pk.model];return `AIsary — par Toky Rakotomalala
 Projet : ${PROJ.name}
 Date : ${new Date().toLocaleString('fr-FR')}
 Modèle de destination : ${MODELS[pk.model].n}
 
 COMMENT UTILISER CE DOSSIER
+Les images à joindre sont dans le dossier « pieces-jointes », déjà numérotées.
 ${pk.envois.map((e,i)=>`${pk.envois.length>1?`\nENVOI ${i+1}/${pk.envois.length}\n`:''}1. ${i===0?`Ouvrez ${L?L[1]:'votre outil de génération'}`:'Restez dans la même conversation'}
-2. Copiez-collez le texte de ${pk.envois.length>1?`envoi-${i+1}.txt`:'prompt.txt'}
-${e.files.length?`3. Glissez ces images, dans cet ordre : ${e.files.map(f=>f.name).join(', ')}`:'3. Aucune image à joindre'}
+2. Copiez-collez le texte de ${pk.envois.length>1?`envoi-${i+1}.txt`:'prompt_….txt'}
+${e.files.length?`3. Glissez depuis « pieces-jointes », dans cet ordre : ${e.files.map(f=>f.name).join(', ')}`:'3. Aucune image à joindre'}
 4. Envoyez`).join('\n')}
+
+Une fois l'image générée, enregistrez-la dans le dossier « images » et importez-la dans AIsary (Export > Importer l'image générée) pour l'upscaler.
 
 Le fichier scene.aisary permet de rouvrir cette scène dans AIsary (Accueil > Ouvrir un fichier .aisary).
 `}
@@ -96,7 +102,7 @@ async function dataToBlob(u){return await (await fetch(u)).blob()}
 async function packFiles(pk){const f=[];const mk=MODELS[pk.model].n.split(' ')[0].toLowerCase();
  f.push([`prompt_${mk}.txt`,pk.text]);if(pk.envois.length>1)pk.envois.forEach((e,i)=>f.push([`envoi-${i+1}.txt`,e.text]));
  if(pk.neg)f.push(['prompt_negatif.txt',pk.neg]);f.push(['LISEZ-MOI.txt',readme(pk)]);
- for(const r of pk.refs)f.push([r.name,await dataToBlob(R[r.key])]);
+ for(const r of pk.refs)f.push(['pieces-jointes/'+r.name,await dataToBlob(R[r.key])]);
  f.push(['scene.aisary',projectFileBlob({...PROJ,scene:S,refs:R})]);return f}
 
 /* ---------- dossier de dépôt ---------- */
@@ -106,16 +112,22 @@ async function getRoot(ask){let h=null;try{h=await DB.kvGet('root')}catch(e){}
  return ask?pickRoot():null}
 async function pickRoot(){try{const h=await window.showDirectoryPicker({id:'aisary-depot',mode:'readwrite'});await DB.kvSet('root',h);G.rootName=h.name;saveG();toast('Dossier de dépôt : '+h.name);return h}
  catch(e){if(e.name!=='AbortError')toast('Ce navigateur ne permet pas de choisir un dossier. Utilisez le ZIP.');return null}}
-async function writeFile(dir,name,data){const fh=await dir.getFileHandle(name,{create:true});const w=await fh.createWritable();await w.write(data);await w.close()}
+async function writeFile(dir,name,data){const parts=name.split('/');while(parts.length>1)dir=await dir.getDirectoryHandle(parts.shift(),{create:true});name=parts[0];const fh=await dir.getFileHandle(name,{create:true});const w=await fh.createWritable();await w.write(data);await w.close()}
 async function nextVersionDir(root){const pd=await root.getDirectoryHandle(slug(PROJ.name),{create:true});let max=0;for await(const [n] of pd.entries()){const m=/^v(\d+)$/.exec(n);if(m)max=Math.max(max,+m[1])}const v='v'+pad(max+1);return {pd,v,vd:await pd.getDirectoryHandle(v,{create:true})}}
 async function exportFolder(){await saveProjNow();const pk=buildPack();
  if(!FS_OK){exportZip();return}
  try{const root=await getRoot(true);if(!root)return;const {v,vd}=await nextVersionDir(root);for(const [n,d] of await packFiles(pk))await writeFile(vd,n,d);
-  XP.last=`${root.name}/${slug(PROJ.name)}/${v}`;toast('Dossier créé : '+XP.last);renderExport()}
+  XP.last=`${root.name}/${slug(PROJ.name)}/${v}`;XP.done=true;toast('Dossier créé : '+XP.last);renderExport()}
  catch(e){toast('Écriture impossible ici ('+e.name+'). Téléchargement du ZIP.');exportZip()}}
 async function exportZip(){await saveProjNow();if(!window.JSZip){toast('Module ZIP indisponible hors connexion');return}
  const pk=buildPack(),z=new JSZip(),dir=z.folder(slug(PROJ.name));for(const [n,d] of await packFiles(pk))dir.file(n,d);
- downloadBlob(await z.generateAsync({type:'blob'}),slug(PROJ.name)+'.zip');XP.last='ZIP téléchargé';renderExport()}
+ downloadBlob(await z.generateAsync({type:'blob'}),slug(PROJ.name)+'.zip');XP.last='ZIP téléchargé : décompressez-le, les images sont dans « pieces-jointes »';XP.done=true;renderExport()}
+async function saveSceneToFolder(){const root=await getRoot(false);if(!root||!PROJ)return '';const pd=await root.getDirectoryHandle(slug(PROJ.name),{create:true});await writeFile(pd,slug(PROJ.name)+'.aisary',projectFileBlob({...PROJ,scene:S,refs:R}));return root.name+'/'+slug(PROJ.name)}
+async function openAttachments(){if(!XP.done){await exportFolder();if(!XP.done)return}
+ if(window.__TAURI__&&XP.lastPath){try{await window.__TAURI__.opener.openPath(XP.lastPath+(navigator.platform.includes('Win')?'\\':'/')+'pieces-jointes');return}catch(err){try{await window.__TAURI__.opener.revealItemInDir(XP.lastPath);return}catch(e2){}}}
+ toast('Ouvrez ce dossier dans le Finder ou l’Explorateur : '+XP.last+'/pieces-jointes')}
+async function importGenerated(file){if(!file||!PROJ)return;const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(file)});
+ PROJ.results=PROJ.results||[];PROJ.results.push({id:Date.now().toString(36),data,model:'importée ('+MODELS[S.render.model].n+')',date:Date.now()});await saveProjNow();renderExport();toast('Image ajoutée au projet')}
 async function saveResultToFolder(r){try{const root=await getRoot(true);if(!root)return;const pd=await root.getDirectoryHandle(slug(PROJ.name),{create:true});const rd=await pd.getDirectoryHandle('images',{create:true});
  await writeFile(rd,`${slug(PROJ.name)}_${r.id}.${r.data.includes('png')?'png':'jpg'}`,await dataToBlob(r.data));toast('Image enregistrée dans '+root.name+'/'+slug(PROJ.name)+'/images')}catch(e){toast('Enregistrement impossible : utilisez Télécharger')}}
 
@@ -149,22 +161,26 @@ async function generate(){const m=S.render.model,svc=MODEL_SERVICE[m],k=svc&&key
 function recapCard(tab,icn,title,visual,lines){return `<article class="rcard"><div class="rvis">${visual}</div><div class="rtxt"><span class="rt">${ic(icn)}${esc(title)}</span>${lines.map(l=>`<span>${l}</span>`).join('')}</div><button class="btn small ghost" data-goto="${tab}">${ic('pencil')}Modifier</button></article>`}
 function renderExport(){
  if(!PROJ){showScreen('home');return}
- const el=$('#export'),c=S.camera,m=S.render.model,api=G.mode==='api',pk=buildPack(),kitName=(KITS[S.kit]||S.customKits.find(k=>k.id===S.kit)||{fr:'Installation personnalisée'}).fr;
+ const el=$('#export'),c=S.camera,m=S.render.model,api=G.mode==='api',pk=buildPack(),kitName=(KITS[S.kit]||S.customKits.find(k=>k.id===S.kit)||{fr:'Installation personnalisée'}).fr,T=S.ptype;
+ const L=MODEL_LINK[m],mac=navigator.platform.includes('Mac');
  const subj=S.subjects.map((s,i)=>`${S.subjects.length>1?i+1+'. ':''}${esc(KIND[s.kind].fr)}${s.kind==='person'?' · '+esc(flat(OUTFIT)[s.outfit].fr):s.kind==='product'&&s.product?' · '+esc(s.product):''}`).join('<br>');
  const svc=MODEL_SERVICE[m],key=svc&&keyFor(svc),canGen=api&&key;
  const words=pk.text.split(/\s+/).filter(Boolean).length;
  el.innerHTML=`<div class="xwrap">
- <div class="xhead"><button class="btn ghost" data-tab="decor">${ic('arrow-left')}Retour au plateau</button><div><p class="eyebrow">Export</p><h1>${esc(PROJ.name)}</h1></div></div>
+ <div class="xhead"><button class="btn ghost" data-tab="decor">${ic('arrow-left')}Retour au plateau</button><div><p class="eyebrow">Export · ${esc(PTYPES[T].fr)}</p><h1>${esc(PROJ.name)}</h1></div><span class="sp"></span><button class="btn savebig" data-save>${ic('save')}Enregistrer le projet</button></div>
  <div class="xgrid">
   <section class="xleft">
    <div class="finderbox big"><svg id="xFinder" viewBox="0 0 100 125" aria-label="Aperçu de la composition"></svg><div id="xFinderCap"></div></div>
    <h2 class="xh">${ic('list-checks')}Récapitulatif de la scène</h2>
    <div class="rgrid">
-    ${recapCard(BGM[S.bg].cat==='mada'?'mada':'decor','image','Décor',`<div class="rsw" style="background:${BGM[S.bg].sw}"></div>`,[esc(BGM[S.bg].fr),S.bgNote?'✎ '+esc(S.bgNote.slice(0,60)):''].filter(Boolean))}
-    ${recapCard('ambiance','sun','Ambiance',timeThumb(S.time,TIME[S.time]),[esc(TIME[S.time].fr)+' · '+esc(WEATHER[S.weather].fr),esc(MOOD[S.mood].fr)])}
+    ${recapCard('decor','image',T==='scene'?'Lieu':'Décor',customBg()?`<img class="rsw" src="${R['d.bgR']}" alt="">`:`<div class="rsw" style="background:${BGM[S.bg].sw}"></div>`,[esc(customBg()?'Mon décor (image)':BGM[S.bg].fr),S.bgNote?'✎ '+esc(S.bgNote.slice(0,60)):'',T==='human'&&S.props.length?esc(S.props.map(k=>DPROPS[k]?.fr).join(', ')):''].filter(Boolean))}
+    ${T==='product'?recapCard('produit','package','Produit',`<div class="ricons">${ic(PKTYPE[S.pk.type].ic)}</div>`,[esc((S.subjects[0]&&S.subjects[0].product)||PKTYPE[S.pk.type].fr),esc(S.pk.mat.map(k=>PKMAT[k]?.fr).join(', '))].filter(Boolean)):''}
+    ${T==='product'?recapCard('effets','sparkles','Effets',`<div class="ricons">${ic('droplets')}${ic('apple')}</div>`,[esc([...S.pk.splash.map(k=>PKSPLASH[k]?.fr),...S.pk.fruits.map(k=>PKFRUIT[k]?.fr),...S.pk.fx.map(k=>PKFX[k]?.fr)].filter(Boolean).join(', ')||'Aucun effet')]):''}
+    ${T==='scene'?recapCard('elements','trees','Éléments',`<div class="ricons">${ic('trees')}</div>`,[esc(S.sc.style.map(k=>SCSTYLE[k]?.fr).join(', ')),esc(SCCOMP[S.sc.comp]?.fr||'')].filter(Boolean)):''}
+    ${recapCard('ambiance','sun','Ambiance',timeThumb(S.time,TIME[S.time]),[esc(TIME[S.time].fr)+(S.weather.length?' · '+esc(S.weather.map(k=>WEATHER[k]?.fr).join(', ')):''),esc(S.mood.map(k=>MOOD[k]?.fr).join(', '))].filter(Boolean))}
     ${recapCard('lumiere','lightbulb','Lumières',kitThumb(S.lights.map(l=>[l.type,l.role,l.x,l.y,l.z,l.power,l.kelvin,l.gel])),[esc(kitName),S.lights.length+' lumière'+(S.lights.length>1?'s':'')])}
     ${recapCard('camera','camera','Caméra',framingThumb(c.framing,FRAMING[c.framing]),[esc(BODY[c.body].fr)+' · '+LENS[c.lens].f+' mm · f/'+c.ap,esc(FRAMING[c.framing].fr)+' · '+esc(angleInfo().fr)])}
-    ${recapCard('sujet','users','Sujets',`<div class="ricons">${S.subjects.map(s=>ic(KIND[s.kind].ic)).join('')}${S.crowd!=='none'?ic('users'):''}</div>`,[subj,S.crowd!=='none'?'+ '+esc(CROWD[S.crowd].fr):''].filter(Boolean))}
+    ${T==='human'?recapCard('sujet','users','Sujets',`<div class="ricons">${S.subjects.map(s=>ic(KIND[s.kind].ic)).join('')}${S.crowd!=='none'?ic('users'):''}</div>`,[subj,S.crowd!=='none'?'+ '+esc(CROWD[S.crowd].fr):''].filter(Boolean)):''}
     ${recapCard('rendu','frame','Format & style',ratioThumb(S.render.ratio),[S.render.ratio+' · '+esc(USAGE[S.render.usage].fr),esc(STYLE[S.render.style].fr)])}
    </div>
   </section>
@@ -187,18 +203,23 @@ function renderExport(){
     <button class="btn primary huge" id="xGen" ${XP.busy?'disabled':''}>${XP.busy?`${ic('loader')}Génération en cours…`:`${ic('wand-sparkles')}Générer l'image`}</button>
     ${!canGen?`<p class="hint">${svc?'Ajoutez une clé pour ce service.':'Ce modèle n’est disponible qu’en mode sans API.'}</p>`:''}
     ${XP.err?`<p class="err">${ic('circle-alert')}${esc(XP.err)}</p>`:''}`
-   :`<h2>Exporter vers ${esc(MODELS[m].n)}</h2>
+   :`<h2>Exporter vers ${esc(MODELS[m].n)} : suivez les étapes</h2>
     <div class="xactions">
-     <button class="btn primary huge" id="xFolder">${ic('folder-plus')}${FS_OK?'Créer le dossier du projet':'Télécharger le dossier (ZIP)'}</button>
-     ${FS_OK?`<p class="hint">Dossier de dépôt : <b>${esc(G.rootName||'pas encore choisi')}</b> · <button class="linkbtn" id="xRoot">changer</button> · <button class="linkbtn" id="xZip">ZIP plutôt</button></p>`:`<p class="hint">Pour écrire directement dans un dossier, utilisez Chrome ou Edge, ou <a href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">l'appli AIsary pour Mac et Windows</a>.</p>`}
-     ${XP.last?`<p class="ok">${ic('circle-check')}${esc(XP.last)}${XP.lastPath&&window.__TAURI__?` · <button class="linkbtn" id="xReveal">${navigator.platform.includes('Mac')?'Afficher dans le Finder':'Ouvrir le dossier'}</button>`:''}</p>`:''}
-     <div class="envois">${pk.envois.map((e,i)=>`<div class="envoi"><span class="ebadge">${pk.envois.length>1?'Envoi '+(i+1):'Envoi'}</span><span class="efiles">${e.files.length?e.files.map(f=>f.name).join(', '):'texte seul'}</span><button class="btn small" data-copyenv="${i}">${ic('copy')}Copier le texte</button></div>`).join('')}</div>
-     ${MODEL_LINK[m]?`<a class="btn huge outline" href="${MODEL_LINK[m][1]}" target="_blank" rel="noopener">${ic('external-link')}${MODEL_LINK[m][0]}</a>`:`<p class="hint">Ouvrez votre outil ${esc(MODELS[m].n)} habituel.</p>`}
-     <ol class="howto"><li>${ic('copy')}<span>Copiez le texte de l'envoi</span></li><li>${ic('external-link')}<span>Ouvrez ${esc(MODELS[m].n)} et collez</span></li><li>${ic('images')}<span>Glissez les images numérotées, dans l'ordre</span></li></ol>
+     <div class="gstep${XP.done?' done':''}"><span class="gs">A</span><div><b>Créer le dossier du projet</b><small>${FS_OK?`Dossier de dépôt : <b>${esc(G.rootName||'pas encore choisi')}</b> · <button class="linkbtn" id="xRoot">changer</button> · <button class="linkbtn" id="xZip">ZIP plutôt</button>`:`Votre navigateur télécharge un ZIP. Pour écrire directement dans un dossier : Chrome, Edge ou <a href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">l'appli AIsary</a>.`}</small>
+      ${XP.last?`<p class="ok">${ic('circle-check')}${esc(XP.last)}</p>`:''}</div><button class="btn ${XP.done?'':'primary'}" id="xFolder">${ic('folder-plus')}${XP.done?'Recréer (nouvelle version)':FS_OK?'Créer le dossier':'Télécharger le ZIP'}</button></div>
+     ${pk.envois.map((env,i)=>`<div class="envblock">${pk.envois.length>1?`<span class="ebadge">Envoi ${i+1} sur ${pk.envois.length}</span>`:''}
+      <div class="gstep"><span class="gs">1</span><div><b>Copiez le texte</b><small>${pk.envois.length>1&&i>0?'Message suivant, dans la même conversation.':'Le prompt complet, prêt à coller.'}</small></div><button class="btn primary" data-copyenv="${i}">${ic('copy')}Copier le texte</button></div>
+      ${env.files.length?`<div class="gstep"><span class="gs">2</span><div><b>Ouvrez les pièces jointes</b><small>Dossier « pieces-jointes » : ${esc(env.files.map(f=>f.name).join(', '))}</small><div class="pjthumbs">${env.files.map(f=>`<figure><img src="${R[f.key]}" alt=""><figcaption>${f.n}</figcaption></figure>`).join('')}</div></div><button class="btn" data-openpj>${ic('folder-open')}${window.__TAURI__?(mac?'Ouvrir dans le Finder':'Ouvrir le dossier'):'Où sont-elles ?'}</button></div>`:''}
+      <div class="gstep"><span class="gs">${env.files.length?3:2}</span><div><b>${i===0?`Ouvrez ${esc(MODELS[m].n)}, collez le texte`:'Collez le texte'}${env.files.length?' et glissez les images':''}</b><small>${mac?'Cmd + V':'Ctrl + V'} pour coller${env.files.length?', puis faites glisser les images numérotées dans la zone de message, dans l’ordre.':'.'}</small></div>${i===0&&L?`<a class="btn" href="${L[1]}" target="_blank" rel="noopener">${ic('external-link')}${L[0]}</a>`:''}</div>
+     </div>`).join('')}
+     <div class="gstep"><span class="gs">${ic('image-down')}</span><div><b>Votre image est générée ?</b><small>Importez-la ici pour la garder dans le projet et l'upscaler pour l'impression.</small></div><label class="btn">${ic('upload')}Importer l'image<input type="file" id="xImport" accept="image/*" hidden></label></div>
     </div>`}
-    ${(PROJ.results||[]).length?`<h2 class="xh">${ic('images')}Images générées</h2><div class="results">${PROJ.results.slice().reverse().map(r=>`<figure><img src="${r.data}" alt="Image générée"><figcaption><small>${esc(r.model)} · ${ago(r.date)}</small><span><button class="ib" data-dlres="${r.id}" title="Télécharger">${ic('download')}</button>${FS_OK?`<button class="ib" data-saveres="${r.id}" title="Enregistrer dans le dossier du projet">${ic('folder-down')}</button>`:''}<button class="ib danger" data-delres="${r.id}" title="Supprimer">${ic('trash-2')}</button></span></figcaption></figure>`).join('')}</div>`:''}
+    ${(PROJ.results||[]).length?`<h2 class="xh">${ic('images')}Images générées</h2><div class="results">${PROJ.results.slice().reverse().map(r=>`<figure><img src="${r.data}" alt="Image générée"><figcaption><small>${esc(r.model)} · ${ago(r.date)}</small><span><button class="ib up" data-upres="${r.id}" title="Upscaler pour l'impression">${ic('maximize')}</button><button class="ib" data-dlres="${r.id}" title="Télécharger">${ic('download')}</button>${FS_OK?`<button class="ib" data-saveres="${r.id}" title="Enregistrer dans le dossier du projet">${ic('folder-down')}</button>`:''}<button class="ib danger" data-delres="${r.id}" title="Supprimer">${ic('trash-2')}</button></span></figcaption></figure>`).join('')}</div>`:''}
    </div></div>
   </section>
  </div></div>`;
  renderFinder('#xFinder','#xFinderCap','x');refreshIcons();
 }
+
+/* enregistrer un fichier dans un sous-dossier du dossier de dépôt (web Chrome/Edge) */
+window.saveToRootSub=window.saveToRootSub||async function(sub,name,blob){const root=await getRoot(true);if(!root)return '';let dir=root;for(const p of sub)dir=await dir.getDirectoryHandle(p,{create:true});await writeFile(dir,name,blob);return [root.name,...sub].join('/')};

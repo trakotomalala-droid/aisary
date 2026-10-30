@@ -23,12 +23,22 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 
 ## Ce que fait AIsary
 
-- **Décors** : une soixantaine de décors du monde, et un onglet **Madagascar** avec 57 décors par région (Antananarivo, Hautes Terres, Côte Est, Nord, Ouest, Sud, vie quotidienne).
+**Version 2** : trois types de projet, chacun avec sa couleur.
+
+- 🟡 **Personnages** : une ou plusieurs personnes (solo, duo, trio, foule), poses illustrées et suggérées selon le décor (chaise → assis, voiture → dans ou devant la voiture…).
+- 🔵 **Packshot** : produit fidèle à vos photos, splash (lait, eau, jus…), jusqu'à 6 fruits importés, surface d'eau, décors futuristes, main, personnage.
+- 🟢 **Paysages** : décors, nature morte, paysages idylliques, éléments et composition.
+- ⚡ **Mode Turbo** : avatar ou produit, décor, pose, format… et c'est prêt à exporter.
+- 🟣 **Upscale** : agrandissez une image générée pour l'impression (A4 à A0, 4×3 m, bâche…), en classique, IA locale ou Gemini 4K, avec les dpi écrits dans le fichier (JPEG, PNG, TIFF).
+- **Fenêtres de réglage** : chaque carte s'ouvre en fenêtre (Valider, Annuler, Réinitialiser), avec la boîte « Vos choix » et une barre pour écrire librement.
+- **Votre propre décor** : importez votre photo de fond.
+
+- **Décors** : une soixantaine de décors du monde, et **Madagascar** en tête de l'onglet Décor avec 57 décors par région (Antananarivo, Hautes Terres, Côte Est, Nord, Ouest, Sud, vie quotidienne).
 - **Ambiance** : moment de la journée, météo, climat et pays, température de couleur, ambiance.
 - **Lumières** : 29 kits prêts à l'emploi, du studio au naturel, 25 types de lumière, kits personnels enregistrables.
 - **Caméra** : boîtiers, objectifs, ouverture, vitesse, valeur de plan, angle, hauteur, inclinaison, rendu pellicule.
 - **Sujets** : jusqu'à 3 sujets et une foule ; personnes, produits, animaux, véhicules, créatures, objets ; images de référence (visage, tenue, accessoires…).
-- **Plateau** : vues de dessus (Z), de face (X) et de côté (Y), avec des réglages au clic.
+- **Plateau** : vues de dessus (Z), de face (X) et de côté (Y) affichées ensemble, réglages au clic et bouton « + Lumière ».
 - **Viseur** : aperçu de la composition en direct.
 - **Prompt** : adapté à Gemini, ChatGPT (GPT Image), Flux, Midjourney et Stable Diffusion.
 - **Export** : récapitulatif de la scène, prompt modifiable, dossier de projet prêt à importer dans votre modèle, ou génération directe avec une clé API.
@@ -56,6 +66,8 @@ Les applications sont fabriquées automatiquement par GitHub Actions (Tauri) à 
 - [x] Mode avec API : gestion des clés, choix du modèle, génération Gemini et OpenAI
 - [x] Accueil, projets, enregistrement et réouverture des scènes (.aisary)
 - [x] Guide de démarrage et visite guidée
+- [x] V2 : 3 types de projet, mode Turbo, fenêtres de réglage, poses contextuelles, export guidé
+- [x] Upscale pour l'impression
 - [ ] Vue 3D de la scène
 - [x] Applications Mac et Windows (Tauri, fabrication automatique)
 - [ ] Export PSD par calques et vectoriel
@@ -85,7 +97,7 @@ Copyright © 2026 Toky Rakotomalala
 
 ## English
 
-**AIsary** by Toky Rakotomalala is a free, open-source tool that lets creatives compose AI images like on a real photo set: background, mood, lights, camera and subjects. It then writes a prompt tailored to the chosen image model (Gemini, GPT Image, Flux, Midjourney, Stable Diffusion). "Sary" means "image" in Malagasy.
+**AIsary** by Toky Rakotomalala is a free, open-source tool that lets creatives compose AI images like on a real photo set: background, mood, lights, camera and subjects. Version 2 adds three project types (people, packshot, landscapes), a Turbo mode, settings windows, context-aware poses, guided export and a print upscaler. It then writes a prompt tailored to the chosen image model (Gemini, GPT Image, Flux, Midjourney, Stable Diffusion). "Sary" means "image" in Malagasy.
 
 Created in Madagascar by art director Toky Rakotomalala, first for Malagasy creatives and designers, and open to everyone.
 

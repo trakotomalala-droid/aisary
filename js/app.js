@@ -7,15 +7,30 @@
 const SUBPOS=[[50,50],[38,53],[62,53]];
 function newSubject(id,kind,x,y){return {id,kind:kind||'person',x,y,gender:'woman',age:'25-35',origin:'highland',morpho:'average',hair:'braids',outfit:'hoany',expression:'smile',pose:'standing',poses:['standing'],posesSet:false,acc:[],notes:{},animal:'maki',animAct:'look',vehicle:'city',vstate:'new',vcolor:'',fantasy:'dragon',product:'',surface:'wood',desc:''}}
 function mkLights(L){return L.map((a,i)=>({id:i+1,type:a[0],role:a[1],x:a[2],y:a[3],z:a[4],power:a[5],kelvin:a[6],gel:a[7]}))}
-function defaults(){return {v:2,tab:'decor',view:'z',bg:'foret',bgCat:'nature',madaReg:'tana',notes:{},bgNote:'',time:'golden',weather:'clear',climate:'est',temp:30,mood:'warm',
+function defaults(type){type=PTYPES[type]?type:'human';const b={v:2,ptype:type,tab:'decor',view:'all',bg:'foret',bgCat:'mada',madaReg:'tana',notes:{},bgNote:'',time:'golden',weather:['clear'],climate:'est',temp:30,mood:['warm'],props:[],keepBg:false,
  lights:mkLights(KITS.rembrandt.L),kit:'rembrandt',kitCat:'portrait',lsel:1,customKits:[],
  camera:{body:'a7r5',lens:'85',ap:2,framing:'medium',angle:'eye',film:'portra',shutter:'normal',x:50,y:86,z:1.6,tilt:0,roll:0,aim:true},
  subjects:[newSubject(1,'person',50,50)],subSel:1,crowd:'none',interact:'side',adv:{},
- render:{model:'gemini',ratio:'4:5',usage:'social',style:'ad'}}}
+ pk:{type:'bottle',mat:[],splash:[],fruits:[],fx:[],hand:'none',handSkin:'mg'},sc:{style:['idyllic'],elems:[],comp:'thirds'},
+ render:{model:'gemini',ratio:'4:5',usage:'social',style:'ad'}};
+ if(type==='product'){const p=newSubject(1,'product',50,50);p.poses=['p_upright'];p.surface='plinth';b.subjects=[p];b.bg='studioW';b.bgCat='studio';b.lights=mkLights(KITS.packshot.L);b.kit='packshot';b.kitCat='produit';
+  Object.assign(b.camera,{lens:'100m',ap:8,framing:'cu',film:'clean',y:80});b.time='studio';b.weather=[];b.climate='none';b.temp=0;b.mood=['fresh'];b.render.style='pack';b.render.ratio='1:1'}
+ if(type==='scene'){b.subjects=[];b.bg='rizieres';b.lights=mkLights(KITS.goldenback.L);b.kit='goldenback';b.kitCat='naturel';
+  Object.assign(b.camera,{lens:'24',ap:8,framing:'xwide',film:'clean',y:90,z:1.7});b.render.style='land';b.render.ratio='16:9';b.mood=['warm']}
+ return b}
+function tabsFor(t){return {
+ human:[['decor','Décor','image'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['sujet','Sujets','users'],['rendu','Rendu','frame'],['export','Export','send']],
+ product:[['decor','Décor','image'],['produit','Produit','package'],['effets','Effets','sparkles'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['rendu','Rendu','frame'],['export','Export','send']],
+ scene:[['decor','Lieu','image'],['elements','Éléments','trees'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['rendu','Rendu','frame'],['export','Export','send']],
+}[t]||[]}
 let S; try{S=JSON.parse(localStorage.getItem('aisary-v2'))}catch(e){}
 const HAD_OLD=!!S;
-function normalize(X){if(!X||X.v!==2)X=defaults();const d=defaults();for(const k in d)if(X[k]===undefined)X[k]=d[k];
- X.notes=X.notes||{};X.adv=X.adv||{};X.madaReg=X.madaReg||'tana';if(X.bgCat==='mada')X.bgCat='nature';X.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[];if(!Array.isArray(s.poses))s.poses=[typeof POSES!=='undefined'&&POSES[s.pose]?s.pose:'standing']});if(X.tab==='export')X.tab='decor';return X}
+function normalize(X){if(!X||X.v!==2)X=defaults();const d=defaults(X.ptype||'human');for(const k in d)if(X[k]===undefined)X[k]=d[k];
+ X.notes=X.notes||{};X.adv=X.adv||{};X.madaReg=X.madaReg||'tana';X.view='all';X.pk=Object.assign({},d.pk,X.pk||{});X.sc=Object.assign({},d.sc,X.sc||{});
+ if(!Array.isArray(X.weather))X.weather=X.weather?[X.weather]:[];if(!Array.isArray(X.mood))X.mood=X.mood?[X.mood]:[];if(!Array.isArray(X.props))X.props=[];
+ if(!BGM[X.bg])X.bg=d.bg;if(!BGCAT[X.bgCat])X.bgCat='mada';
+ X.subjects.forEach(s=>{s.notes=s.notes||{};s.acc=s.acc||[];if(!Array.isArray(s.poses))s.poses=[typeof POSES!=='undefined'&&POSES[s.pose]?s.pose:'standing']});
+ if(!tabsFor(X.ptype).some(t=>t[0]===X.tab)||X.tab==='export')X.tab='decor';return X}
 S=normalize(S);
 let POP=null, bgQ='';
 let R={}; try{R=JSON.parse(localStorage.getItem('aisary-refs'))||{}}catch(e){R={}}
@@ -49,7 +64,7 @@ let iconT; function refreshIcons(){cancelAnimationFrame(iconT);iconT=requestAnim
 /* ================= GÉOMÉTRIE ================= */
 const KMETA={person:{h:1.75,t:1.5},product:{h:.32,t:.9},animal:{h:.7,t:.45},vehicle:{h:1.5,t:.8},fantasy:{h:2.1,t:1.6},object:{h:.6,t:.6}};
 function subH(s){return s.kind==='person'&&(s.gender==='girl'||s.gender==='boy'||+String(s.age).split('-')[0]<13)?1.15:KMETA[s.kind].h}
-function target(){const n=S.subjects.length;let x=0,y=0,z=0;S.subjects.forEach(s=>{x+=s.x;y+=s.y;z+=(s.kind==='person'?subH(s)*.88:KMETA[s.kind].t)});return {x:x/n,y:y/n,z:z/n}}
+function target(){const n=S.subjects.length;if(!n)return {x:50,y:50,z:1.2};let x=0,y=0,z=0;S.subjects.forEach(s=>{x+=s.x;y+=s.y;z+=(s.kind==='person'?subH(s)*.88:KMETA[s.kind].t)});return {x:x/n,y:y/n,z:z/n}}
 function fovDeg(){const L=LENS[S.camera.lens];let f=L.fov||2*Math.atan(36/(2*L.f))*180/Math.PI;if(L.ana)f*=1.33;return Math.min(f,180)}
 function camTilt(){const c=S.camera;if(!c.aim)return c.tilt;const t=target(),d=Math.hypot(t.x-c.x,t.y-c.y)/10;return Math.round(Math.atan2(t.z-c.z,Math.max(d,.05))*180/Math.PI)}
 function angleInfo(){const c=S.camera,t=camTilt();let en,fr;
@@ -111,8 +126,7 @@ function kitThumb(L){const T={x:50,y:50};
  return `<svg viewBox="6 6 88 88"><rect x="6" y="6" width="88" height="88" fill="#121514"/><circle cx="50" cy="50" r="22" fill="none" stroke="#28302d" stroke-width=".6"/>${lights}<circle cx="50" cy="50" r="5" fill="#28312d" stroke="#e4e9e7" stroke-width="1.2"/><rect x="45" y="83" width="10" height="7" rx="1.5" fill="#e4e9e7"/></svg>`}
 
 /* ================= ONGLETS & PANNEAUX ================= */
-const TABS=[['decor','Décor','image'],['mada','Mada','map'],['ambiance','Ambiance','sun'],['lumiere','Lumières','lightbulb'],['camera','Caméra','camera'],['sujet','Sujets','users'],['rendu','Rendu','frame'],['export','Export','send']];
-function renderTabs(){$('#tabs').innerHTML=TABS.map(([id,fr,i])=>`<button role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${ic(i)}<span>${fr}</span></button>`).join('')}
+function renderTabs(){$('#tabs').innerHTML=tabsFor(S.ptype).map(([id,fr,i])=>`<button role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${ic(i)}<span>${fr}</span></button>`).join('')}
 
 function slot(key,label,icn){const u=R[key];return `<label class="slot${u?' has':''}" data-slot="${key}">${u?`<img src="${u}" alt=""><button class="unslot" data-unslot="${key}" aria-label="Retirer l'image">${ic('x')}</button>`:`${ic(icn||'image-plus')}`}<span>${esc(label)}</span><input type="file" accept="image/*" data-slotin="${key}" hidden></label>`}
 function advanced(id,title,inner){return `<details class="adv" data-adv="${id}"${S.adv[id]?' open':''}><summary>${ic('sliders-horizontal')}<span>${esc(title)}</span><span class="badge">${countRefs(id)}</span></summary><div class="advb">${inner}</div></details>`}
@@ -157,7 +171,8 @@ function svgGrad(css,id){css=String(css||'#333');const m=/^(linear|radial)-gradi
  if(m[1]==='radial')return {defs:`<radialGradient id="${id}" cx="${cx}" cy="${cy}" r=".75">${stops}</radialGradient>`,fill:`url(#${id})`};
  const r=ang*Math.PI/180,dx=Math.sin(r)/2,dy=-Math.cos(r)/2;
  return {defs:`<linearGradient id="${id}" x1="${(.5-dx).toFixed(3)}" y1="${(.5-dy).toFixed(3)}" x2="${(.5+dx).toFixed(3)}" y2="${(.5+dy).toFixed(3)}">${stops}</linearGradient>`,fill:`url(#${id})`}}
-function bgStrip(x,y,w,h,op,id='bgs'){const g=svgGrad(BGM[S.bg]?.sw,id);return `<defs>${g.defs}</defs><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="${g.fill}" opacity="${op}"/>`}
+const customBg=()=>!!R['d.bgR']&&!S.keepBg;
+function bgStrip(x,y,w,h,op,id='bgs'){if(customBg())return `<image href="${R['d.bgR']}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" opacity="${op}"/>`;const g=svgGrad(BGM[S.bg]?.sw,id);return `<defs>${g.defs}</defs><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="${g.fill}" opacity="${op}"/>`}
 function crowdDots(){const n={none:0,few:5,medium:12,dense:22}[S.crowd];let o='';for(let i=0;i<n;i++){const x=10+((i*37)%80),y=16+((i*23)%22);o+=`<circle cx="${x}" cy="${y}" r="1.4" fill="#5e7169" opacity=".7"/>`}return o}
 function selRing(key,r=4.8){return POP&&POP.key===key?`<circle r="${r}" fill="none" stroke="#e4e9e7" stroke-width=".45" stroke-dasharray="1 1"/>`:''}
 function viewZ(){
@@ -171,7 +186,7 @@ function viewZ(){
  const subs=S.subjects.map((s,i)=>{const fp=s.kind==='vehicle'?`<rect x="-19" y="-8" width="38" height="16" rx="3" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='animal'?`<ellipse rx="4.5" ry="2.4" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:s.kind==='product'||s.kind==='object'?`<rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx=".8" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/>`:`<circle r="${s.kind==='fantasy'?5:3.4}" fill="#28312d" stroke="#e4e9e7" stroke-width=".5"/><circle cy="-.6" r="1.2" fill="#e4e9e7"/>`;
   return `<g class="drag" data-drag="s:${s.id}" transform="translate(${s.x} ${s.y})"><circle r="6" fill="transparent"/>${selRing('s:'+s.id,6)}${fp}<text y="${s.kind==='vehicle'?12:7.4}" text-anchor="middle" class="svl">${S.subjects.length>1?'Sujet '+(i+1):'Sujet'}</text></g>`}).join('');
  return `<rect x="1" y="1" width="98" height="98" rx="3" fill="#1a1f1d" stroke="#313a36" stroke-width=".3"/>${g}
-  ${bgStrip(8,3,84,4.5,.9,'bgz')}<text x="50" y="11" text-anchor="middle" class="svm">FOND · ${esc((BGM[S.bg]?.fr||'').toUpperCase())}</text>${crowdDots()}
+  ${bgStrip(8,3,84,4.5,.9,'bgz')}<text x="50" y="11" text-anchor="middle" class="svm">FOND · ${esc((customBg()?'Mon décor (image)':BGM[S.bg]?.fr||'').toUpperCase())}</text>${crowdDots()}
   <polygon points="${c.x},${c.y} ${p1} ${p2}" fill="#e4e9e7" opacity=".05"/><line x1="${c.x}" y1="${c.y}" x2="${T.x}" y2="${T.y}" stroke="#e4e9e7" stroke-width=".25" stroke-dasharray="1 1" opacity=".5"/>
   ${subs}${L}
   <g class="drag" data-drag="cam" transform="translate(${c.x} ${c.y}) rotate(${ang*180/Math.PI+90})"><circle r="6" fill="transparent"/>${selRing('cam')}<rect x="-3.2" y="-1.6" width="6.4" height="4" rx=".8" fill="#e4e9e7"/><rect x="-1.3" y="-3" width="2.6" height="1.6" fill="#e4e9e7"/><circle cy=".4" r="1.2" fill="#131715"/></g>
@@ -201,13 +216,8 @@ function viewSide(ax){ // ax 'x' = vue de face (horizontal = x), 'y' = vue de c�
   <text x="97" y="${GY+2.3}" text-anchor="end" class="svm">${ax==='x'?'VUE X · FACE':'VUE Y · CÔTÉ ← fond'}</text>`;
 }
 function renderStage(){
- const v=S.view;$$('.vbtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
- $('#stagewrap').dataset.mode=v;
- const show={z:v==='z'||v==='all',x:v==='x'||v==='all',y:v==='y'||v==='all'};
- $$('#stagewrap svg').forEach(s=>{s.hidden=!show[s.dataset.view]});
- if(show.z)$('#vz').innerHTML=viewZ();
- if(show.x)$('#vx').innerHTML=viewSide('x');
- if(show.y)$('#vy').innerHTML=viewSide('y');
+ $('#stagewrap').dataset.mode='all';
+ $('#vz').innerHTML=viewZ();$('#vx').innerHTML=viewSide('x');$('#vy').innerHTML=viewSide('y');
  const c=S.camera,ai=angleInfo(),dist=Math.hypot(c.x-target().x,c.y-target().y)/10;
  $('#readout').innerHTML=`<span>${ic('camera')}<b>${esc(BODY[c.body].fr)}</b></span><span>Champ <b>${Math.round(fovDeg())}°</b></span><span>Distance <b>${dist.toFixed(1)} m</b></span><span>Hauteur <b>${c.z.toFixed(2)} m</b></span><span>Angle <b>${esc(ai.fr)}</b></span>`;
  refreshIcons();
@@ -267,7 +277,7 @@ function renderFinder(fid='#finder',cid='#finderCap',pre='f'){const fEl=$(fid);
  let hy=H*(.56+cl(tilt,-60,45)/90*.6);hy=cl(hy,-H,H*1.6);
  // projection
  const fx=T.x-c.x,fy=T.y-c.y,fl=Math.hypot(fx,fy)||1,f=[fx/fl,fy/fl],r=[-f[1],f[0]];
- const prim=S.subjects[0];const pd=Math.max(.5,((prim.x-c.x)*f[0]+(prim.y-c.y)*f[1]));
+ const prim=S.subjects[0]||{kind:'object',x:50,y:50};const pd=Math.max(.5,((prim.x-c.x)*f[0]+(prim.y-c.y)*f[1]));
  const pm=.8*H/subH(prim)*fr.k;
  const ground=fr.k<=1?H*(c.framing==='xwide'?.78:c.framing==='wide'?.84:.92):H*.34+(subH(prim)*(1-SHAPES[prim.kind].poi))*pm;
  const key=S.lights.find(l=>l.role==='key'&&l.type!=='flag')||S.lights.find(l=>l.type!=='flag');
@@ -283,13 +293,13 @@ function renderFinder(fid='#finder',cid='#finderCap',pre='f'){const fEl=$(fid);
  const tt=TIME[S.time];
  const night=S.time==='night'?.5:S.time==='blue'?.28:0;
  const tint=S.temp>0?`rgba(255,150,60,${(S.temp/100*.16).toFixed(3)})`:`rgba(80,140,255,${(-S.temp/100*.16).toFixed(3)})`;
- const sw=BGM[S.bg]?.sw||'#333';
+ const sw=BGM[S.bg]?.sw||'#333',cimg=customBg()?R['d.bgR']:null;
  fEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
  fEl.innerHTML=`<defs><linearGradient id="${pre}g" x1="${g1}" y1="0" x2="${1-g1}" y2="0"><stop offset="0" stop-color="${kd&&kd.a<112?kc:'#28302d'}" stop-opacity="${kd&&kd.a<112?.85:1}"/><stop offset="${kd&&kd.sign===0?1:.55}" stop-color="#38433e"/><stop offset="1" stop-color="#151a18"/></linearGradient>
   <filter id="${pre}b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(bl*.25).toFixed(2)}"/></filter></defs>
   <g transform="rotate(${c.roll} ${W/2} ${H/2})"><g transform="translate(${W/2} ${H/2}) scale(${c.roll?1.25:1}) translate(${-W/2} ${-H/2})">
-  <filter id="${pre}bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${(bl*.35).toFixed(2)}"/></filter>${(g=>g.defs+`<rect x="-8" y="-8" width="${W+16}" height="${H+16}" fill="${g.fill}" filter="url(#${pre}bl)"/>`)(svgGrad(sw,pre+'bk'))}
-  ${studio?'':`<rect x="-10" y="${hy}" width="${W+20}" height="${H*2}" fill="#000" opacity=".22"/><line x1="-10" y1="${hy}" x2="${W+10}" y2="${hy}" stroke="#fff" stroke-opacity=".12" stroke-width=".3"/>`}
+  <filter id="${pre}bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${(bl*.35).toFixed(2)}"/></filter>${cimg?`<image href="${cimg}" x="-8" y="-8" width="${W+16}" height="${H+16}" preserveAspectRatio="xMidYMid slice" filter="url(#${pre}bl)"/>`:(g=>g.defs+`<rect x="-8" y="-8" width="${W+16}" height="${H+16}" fill="${g.fill}" filter="url(#${pre}bl)"/>`)(svgGrad(sw,pre+'bk'))}
+  ${studio||cimg?'':`<rect x="-10" y="${hy}" width="${W+20}" height="${H*2}" fill="#000" opacity=".22"/><line x1="-10" y1="${hy}" x2="${W+10}" y2="${hy}" stroke="#fff" stroke-opacity=".12" stroke-width=".3"/>`}
   <g filter="url(#${pre}b)">${crowd}</g>${subs}</g></g>
   <rect width="${W}" height="${H}" fill="${tint}"/>${night?`<rect width="${W}" height="${H}" fill="#0b0e0d" opacity="${night}"/>`:''}
   ${tt.sun>-5&&tt.sun<20&&!studio?`<rect width="${W}" height="${H}" fill="${tt.c}" opacity=".12"/>`:''}
@@ -324,16 +334,34 @@ function subjPos(s){const c=S.camera,T=target(),fx=T.x-c.x,fy=T.y-c.y,fl=Math.hy
 function refList(){const out=[];
  DECORSLOTS.forEach(d=>{if(R['d.'+d[0]])out.push({key:'d.'+d[0],en:d[3],fr:'Décor · '+d[1],file:'decor_'+d[1]})});
  if(R['l.ref'])out.push({key:'l.ref',en:'lighting reference',fr:'Référence lumière',file:'lumiere_reference'});
- S.subjects.forEach((s,i)=>REFSLOTS[s.kind].forEach(r=>{const k=`s${s.id}.${r[0]}`;if(R[k])out.push({key:k,en:`subject ${i+1}, ${REFLABEL_EN[r[0]]}`,fr:`Sujet ${i+1} · ${r[1]}`,file:`sujet${i+1}_${r[1]}`})}));
+ const lab=(s,i)=>S.ptype==='product'?(s.kind==='product'?'the product':'the person'):`subject ${i+1}`,labF=(s,i)=>S.ptype==='product'?(s.kind==='product'?'Produit':'Personnage'):`Sujet ${i+1}`,fil=(s,i)=>S.ptype==='product'?(s.kind==='product'?'produit':'personnage'):`sujet${i+1}`;
+ S.subjects.forEach((s,i)=>REFSLOTS[s.kind].forEach(r=>{const k=`s${s.id}.${r[0]}`;if(R[k])out.push({key:k,en:`${lab(s,i)}, ${REFLABEL_EN[r[0]]}`,fr:`${labF(s,i)} · ${r[1]}`,file:`${fil(s,i)}_${r[1]}`})}));
+ if(S.ptype==='product'){if(R['pk.hand'])out.push({key:'pk.hand',en:'hand reference (skin tone, manicure)',fr:'Main de référence',file:'main_reference'});
+  PKFRUITSLOTS.forEach(([k,l],j)=>{if(R[k])out.push({key:k,en:`fruit or ingredient ${j+1} to place around the product`,fr:l,file:'fruit_'+(j+1)})})}
  return out}
+const enList=(arr,dict)=>(arr||[]).filter(k=>dict[k]).map(k=>dict[k].en);
+const joinEn=a=>a.length<=1?(a[0]||''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+function productDesc(s){const pk=S.pk,t=PKTYPE[pk.type]||PKTYPE.other,name=(s.product||'').trim();
+ return [name?`${name} (${t.en})`:t.en,joinEn(enList(pk.mat,PKMAT)),snt(s,'prod'),SURFACE[s.surface]?SURFACE[s.surface].en:'',snt(s,'surf'),poseEn(s),snt(s,'pose'),nt('mat')].filter(Boolean).join(', ')}
 function parts(){
- const c=S.camera,r=S.render,P={},fr=FRAMING[c.framing].en,n=S.subjects.length;
- const withDesc=s=>[subjDesc(s),s.desc.trim()].filter(Boolean).join(', ');
- if(n===1){const s=S.subjects[0];P.subject=s.kind==='product'?`A ${fr} product shot of ${withDesc(s)}`:`${art(fr)} ${fr} of ${withDesc(s)}`}
- else P.subject=`${art(fr)} ${fr} of ${n} subjects ${withN(INTERACT[S.interact].en,nt('interact'))}: `+S.subjects.map(s=>`${subjPos(s).en}, ${withDesc(s)}`).join('; ');
- if(S.crowd!=='none'||nt('crowd'))P.subject+=`, ${withN(CROWD[S.crowd].en,nt('crowd'))}`;
- const bg=BGM[S.bg];P.setting=`set in ${bg.en}${S.bgNote.trim()?', '+S.bgNote.trim():''}`;
- P.time=[withN(TIME[S.time].en,nt('time')),withN(WEATHER[S.weather].en,nt('weather')),withN(CLIMATE[S.climate].en,nt('climate'))].filter(Boolean).join(', ');
+ const c=S.camera,r=S.render,P={},fr=FRAMING[c.framing].en,n=S.subjects.length,IA=INTER_ALL();
+ const withDesc=s=>[subjDesc(s),(s.desc||'').trim()].filter(Boolean).join(', ');
+ if(S.ptype==='product'){const prod=S.subjects.find(x=>x.kind==='product')||S.subjects[0],pers=S.subjects.find(x=>x.kind==='person');
+  P.subject=`A ${fr} commercial packshot of ${prod?productDesc(prod):'the product'}`+((prod&&prod.desc||'').trim()?', '+prod.desc.trim():'');
+  const hand=S.pk.hand!=='none'&&POSES[S.pk.hand]?[POSES[S.pk.hand].en.replace('close-up of ',''),ORIGIN[S.pk.handSkin]?`${ORIGIN[S.pk.handSkin].en} skin`:'' ,R['pk.hand']?'matching the hand reference image':'',nt('hand')].filter(Boolean).join(', '):'';
+  if(hand)P.subject+=`, ${hand}`;
+  if(pers)P.subject+=`, with ${withDesc(pers)}`;
+  const fx=[joinEn(enList(S.pk.splash,PKSPLASH)),nt('splash'),joinEn(enList(S.pk.fruits,PKFRUIT)),PKFRUITSLOTS.some(([k])=>R[k])?'the fruits shown in the reference images':'',nt('fruits'),joinEn(enList(S.pk.fx,PKFX)),nt('fx')].filter(Boolean);
+  if(fx.length)P.subject+=`, surrounded by ${fx.join(', ')}`}
+ else if(S.ptype==='scene'){const st=joinEn(enList(S.sc.style,SCSTYLE)),el=[].concat(...Object.values(SCELEM).map(g=>enList(S.sc.elems,g)));
+  P.subject=`${art(fr)} ${fr} of ${st?st+' ':''}scenery`+(el.length?`, featuring ${joinEn(el)}`:'')+(nt('elems')?', '+nt('elems'):'')+(SCCOMP[S.sc.comp]?`, ${SCCOMP[S.sc.comp].en}`:'')+(nt('comp')?', '+nt('comp'):'')+(nt('scstyle')?', '+nt('scstyle'):'')}
+ else if(n===1){const s=S.subjects[0];P.subject=s.kind==='product'?`A ${fr} product shot of ${withDesc(s)}`:`${art(fr)} ${fr} of ${withDesc(s)}`}
+ else P.subject=`${art(fr)} ${fr} of ${n} subjects ${withN((IA[S.interact]||IA.side).en,nt('interact'))}: `+S.subjects.map(s=>`${subjPos(s).en}, ${withDesc(s)}`).join('; ');
+ if(S.ptype==='human'&&(S.crowd!=='none'||nt('crowd')))P.subject+=`, ${withN(CROWD[S.crowd].en,nt('crowd'))}`;
+ const bg=BGM[S.bg];const place=customBg()?'the environment shown in the attached background reference image':bg.en;
+ const props=S.ptype==='human'?joinEn(enList(S.props,DPROPS)):'';
+ P.setting=`set in ${place}${R['d.bgR']&&S.keepBg?' (see also the background reference image)':''}${S.bgNote.trim()?', '+S.bgNote.trim():''}${props?`, with ${props} in the scene`:''}${nt('props')?', '+nt('props'):''}`;
+ P.time=[withN(TIME[S.time].en,nt('time')),withN(joinEn(enList(S.weather,WEATHER)),nt('weather')),withN(CLIMATE[S.climate].en,nt('climate'))].filter(Boolean).join(', ');
  P.lights=S.lights.map(l=>{const d=lightDir(l),t=LT[l.type],g=GEL[l.gel];
   if(l.type==='flag')return `a black flag ${d.en} for negative fill, deepening the shadows`;
   const col=g.hex?`${g.en}`:(l.kelvin<=3600?`warm ${l.kelvin}K`:l.kelvin>=6200?`cool ${l.kelvin}K`:`neutral ${l.kelvin}K`);
@@ -344,12 +372,13 @@ function parts(){
  const ai=angleInfo();
  P.camera=[withN(`shot on ${BODY[c.body].en}`,nt('body'))+` with a ${LENS[c.lens].en} lens at f/${c.ap}`,nt('lens'),nt('framing'),withN(ai.en,nt('angle')),`camera about ${c.z.toFixed(1)} m above the ground`,dof,SHUTTER[c.shutter].en].filter(Boolean).join(', ');
  const grade=S.temp<-20?'cool color grade':S.temp>20?'warm color grade':'natural neutral color balance';
- P.look=[withN(MOOD[S.mood].en,nt('mood')),FILM[c.film].en,nt('film'),grade].filter(Boolean).join(', ');
+ P.look=[withN(S.mood.length?joinEn(enList(S.mood,MOOD).map(x=>x.replace(/ mood$/,'')))+' mood':'',nt('mood')),FILM[c.film].en,nt('film'),grade].filter(Boolean).join(', ');
  P.style=[STYLE[r.style].en,nt('style'),USAGE[r.usage].en,nt('usage')].filter(Boolean).join(', ');
  return P;
 }
 const NEG='blurry, low resolution, distorted hands, extra fingers, deformed face, watermark, text, logo artifacts, oversaturated, plastic skin, cartoon';
 function hasFrench(){const t=[S.bgNote,...Object.values(S.notes),...S.lights.map(l=>l.note||''),...S.subjects.flatMap(s=>[s.desc,s.product,s.vcolor,...Object.values(s.notes||{})])].join(' ');return t.trim().length>0}
+const NEG_HUMAN=', distorted hands, extra fingers, deformed face, plastic skin';
 function buildPrompt(names,model){
  const P=parts(),mk=model||S.render.model,m=MODELS[mk],r=S.render,refs=refList();
  if(m.kind==='natural'){
@@ -376,14 +405,14 @@ function renderPrompt(){
   <div class="field"><span class="lab">Fiche de scène</span>
   <dl class="fiche">
    <dt>Décor</dt><dd>${esc(BGM[S.bg].fr)}</dd>
-   <dt>Moment</dt><dd>${esc(TIME[S.time].fr)} · ${esc(WEATHER[S.weather].fr)}</dd>
-   <dt>Sujets</dt><dd>${S.subjects.map((s,i)=>`${i+1}. ${esc(KIND[s.kind].fr)}${S.subjects.length>1?' ('+subjPos(s).fr+')':''}`).join('<br>')}${S.crowd!=='none'?'<br>+ '+esc(CROWD[S.crowd].fr):''}</dd>
+   <dt>Moment</dt><dd>${esc(TIME[S.time].fr)}${S.weather.length?' · '+esc(S.weather.map(k=>WEATHER[k]?.fr).filter(Boolean).join(', ')):''}</dd>
+   ${S.subjects.length?`<dt>${S.ptype==='product'?'Produit':'Sujets'}</dt><dd>${S.ptype==='product'?esc((S.subjects[0].product||PKTYPE[S.pk.type].fr)):S.subjects.map((s,i)=>`${i+1}. ${esc(KIND[s.kind].fr)}${S.subjects.length>1?' ('+subjPos(s).fr+')':''}`).join('<br>')}${S.crowd!=='none'&&S.ptype==='human'?'<br>+ '+esc(CROWD[S.crowd].fr):''}</dd>`:''}
    <dt>Lumières</dt><dd>${S.lights.map(l=>`${esc(LT[l.type].fr)} (${lightDir(l).fr})`).join(', ')}</dd>
    <dt>Caméra</dt><dd>${esc(BODY[c.body].fr)} · ${LENS[c.lens].f} mm · f/${c.ap}</dd>
    <dt>Plan</dt><dd>${esc(FRAMING[c.framing].fr)} · ${esc(angleInfo().fr)} · ${c.z.toFixed(1)} m</dd>
    <dt>Sortie</dt><dd>${r.ratio} · ${esc(USAGE[r.usage].fr)}</dd>
   </dl></div>
-  <div class="soon">${ic('wand-sparkles')}<span>Générer l'image directement ici</span><span class="sp"></span><span class="tag">Étape 2</span></div>`;
+  <button class="btn primary huge" data-tab="export">${ic('send')}Passer à l'export</button>`;
  refreshIcons();
 }
 
@@ -391,41 +420,44 @@ function renderPrompt(){
 function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,1800)}
 async function copyEl(id){const el=$(id),txt=el.textContent;try{await navigator.clipboard.writeText(txt);toast('Prompt copié')}catch(e){const rg=document.createRange();rg.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(rg);toast('Texte sélectionné, faites Cmd/Ctrl + C')}}
 function lightsRefresh(){renderStage();renderPrompt();renderFinder()}
-function all(){renderTabs();renderPanel();renderStage();renderPrompt();renderFinder();renderPop();save()}
+const ALL_HOOKS=[];
+function all(){renderTabs();renderPanel();renderStage();renderPrompt();renderFinder();renderPop();ALL_HOOKS.forEach(f=>{try{f()}catch(e){console.error(e)}});save()}
 function applyAngle(k){const a=ANGLE[k],c=S.camera,T=target();c.angle=k;c.z=a.z;c.roll=a.roll;
  if(a.tilt===null){c.aim=true}else{c.aim=false;c.tilt=a.tilt}
  if(k==='top'){c.x=T.x;c.y=+(T.y+1.5).toFixed(1)}
  else if(k==='aerial'){c.x=T.x;c.y=cl(T.y+40,14,97)}
  else if(Math.hypot(c.x-T.x,c.y-T.y)<14){c.x=T.x;c.y=cl(T.y+36,14,97)}}
+function addLight(ty){const id=Math.max(0,...S.lights.map(l=>l.id))+1;const l={id,type:ty,role:S.lights.length?'accent':'key',x:+(28+Math.random()*44).toFixed(1),y:+(22+Math.random()*18).toFixed(1),z:['sun','moon','sky','dappled','street'].includes(ty)?4.5:1.8,power:60,kelvin:ty==='fire'?1900:ty==='practical'?2800:ty==='moon'?7500:5600,gel:'none'};S.lights.push(l);S.lsel=id;S.kit=null;return l}
 function setSubjects(n){while(S.subjects.length<n){const id=Math.max(...S.subjects.map(s=>s.id))+1,[x,y]=SUBPOS[S.subjects.length];const ns=newSubject(id,'person',x,y);if(S.subjects.length===1){ns.gender='man';ns.outfit='casual'}S.subjects.push(ns)}
  while(S.subjects.length>n){const s=S.subjects.pop();Object.keys(R).filter(k=>k.startsWith('s'+s.id+'.')).forEach(k=>delete R[k])}
  if(!S.subjects.find(s=>s.id===S.subSel))S.subSel=S.subjects[0].id;saveRefs()}
-function readImage(file,key){if(!file||!file.type.startsWith('image/'))return;const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const m=640,s=Math.min(1,m/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);R[key]=cv.toDataURL('image/jpeg',.82);saveRefs();renderPanel();renderPrompt();toast('Image ajoutée')};img.src=fr.result};fr.readAsDataURL(file)}
+function readImage(file,key){if(!file||!file.type.startsWith('image/'))return;const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const m=key==='d.bgR'?1600:1024,s=Math.min(1,m/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);R[key]=cv.toDataURL('image/jpeg',.85);saveRefs();all();toast('Image ajoutée')};img.src=fr.result};fr.readAsDataURL(file)}
 
 document.addEventListener('click',e=>{
+ if(!e.target.closest('#addmenu,#addLightBtn')){const m=$('#addmenu');if(m)m.hidden=true}
  const t=e.target.closest('button,[data-lsel]');if(!t)return;const d=t.dataset;
- if(d.unslot){e.preventDefault();delete R[d.unslot];saveRefs();renderPanel();renderPrompt();return}
+ if(d.unslot){e.preventDefault();delete R[d.unslot];saveRefs();all();return}
+ if(d.unpick){const v=get(d.unpick);if(Array.isArray(v))set(d.unpick,v.filter(x=>x!==d.val));else set(d.unpick,d.reset||'none');all();return}
  if(d.tab==='export'){POP=null;showScreen('export');return}
  if(d.tab){if(SCREEN!=='editor')showScreen('editor');if(d.tab!==S.tab)bgQ='';S.tab=d.tab;if(t.closest('#pop'))POP=null;all();return}
- if(d.view){S.view=d.view;POP=null;renderPop();renderStage();save();return}
  if(d.popclose!==undefined){POP=null;renderPop();renderStage();renderPanel();return}
  if(d.set){if(d.set==='camera.angle')applyAngle(d.val);else set(d.set,d.val);if(d.set==='bgCat'||d.set==='madaReg'){bgQ=''}
   if(/^subjects\.\d+\.kind$/.test(d.set)&&POP)renderPop();all();return}
- if(d.toggle){let arr=get(d.toggle)||[];const i=arr.indexOf(d.val);if(i<0){if(d.val==='none')arr=[];else arr=arr.filter(x=>x!=='none');arr.push(d.val)}else arr.splice(i,1);set(d.toggle,arr);all();return}
+ if(d.toggle){let arr=[...(get(d.toggle)||[])];const i=arr.indexOf(d.val);if(i<0){if(d.val==='none')arr=[];else arr=arr.filter(x=>x!=='none');if(d.max&&arr.length>=+d.max){toast(d.max+' choix maximum : retirez-en un d’abord');return}arr.push(d.val)}else arr.splice(i,1);set(d.toggle,arr);all();return}
  if(d.kit){const k=S.customKits.find(x=>x.id===d.kit)||KITS[d.kit];S.lights=mkLights(k.L);S.kit=d.kit;S.lsel=1;POP=null;all();toast('Kit « '+k.fr+' » appliqué');return}
  if(d.kdel){S.customKits=S.customKits.filter(k=>k.id!==d.kdel);all();return}
- if(d.lsel){S.lsel=S.lsel==+d.lsel?0:+d.lsel;renderPanel();save();return}
+ if(d.lsel){S.lsel=S.lsel==+d.lsel?0:+d.lsel;all();return}
  if(d.del){S.lights=S.lights.filter(l=>l.id!=d.del);if(POP&&POP.key==='l:'+d.del)POP=null;all();return}
  if(d.dup){const l=S.lights.find(x=>x.id==d.dup),id=Math.max(0,...S.lights.map(x=>x.id))+1;S.lights.push({...l,id,x:cl(l.x+8,3,97),y:cl(l.y-6,12,97)});S.lsel=id;all();return}
- if(d.nsub){setSubjects(+d.nsub);POP=null;all();return}
+ if(d.nsub){setSubjects(+d.nsub);const n=+d.nsub;if(n>=3&&!INTERACT3[S.interact])S.interact='trio_line';if(n===2&&INTERACT3[S.interact])S.interact='side';POP=null;all();return}
  if(d.subsel){S.subSel=+d.subsel;renderPanel();save();return}
  if(d.subdel){S.subjects=S.subjects.filter(s=>s.id!=d.subdel);Object.keys(R).filter(k=>k.startsWith('s'+d.subdel+'.')).forEach(k=>delete R[k]);saveRefs();S.subSel=S.subjects[0].id;POP=null;all();return}
- if(t.id==='addLight'){const id=Math.max(0,...S.lights.map(l=>l.id))+1,ty=$('#addType').value;
-  S.lights.push({id,type:ty,role:S.lights.length?'accent':'key',x:+(30+Math.random()*40).toFixed(1),y:+(22+Math.random()*16).toFixed(1),z:ty==='sun'||ty==='moon'||ty==='sky'?4.5:1.8,power:60,kelvin:ty==='fire'?1900:ty==='practical'?2800:5600,gel:'none'});S.lsel=id;S.kit=null;all();return}
+ if(t.id==='addLight'||d.addlight){const ty=d.addlight||$('#addType').value;const l=addLight(ty);if(d.addlight){$('#addmenu').hidden=true;const wr=$('#stagewrap').getBoundingClientRect(),sv=$('#vz').getBoundingClientRect();POP={key:'l:'+l.id,x:sv.left-wr.left+sv.width*l.x/100,y:sv.top-wr.top+sv.height*l.y/100}}all();toast(LT[ty].fr+' ajouté(e) au plateau');return}
+ if(t.id==='addLightBtn'){const m=$('#addmenu');m.hidden=!m.hidden;if(!m.hidden){m.innerHTML=Object.entries(LTYPE).map(([g,o])=>`<div class="amg"><span class="lab">${esc(g)}</span>${Object.entries(o).map(([k,v])=>`<button class="ami" data-addlight="${k}">${ic(v.ic)}<span>${esc(v.fr)}</span></button>`).join('')}</div>`).join('');refreshIcons()}return}
  if(t.id==='saveKit'){const n=$('#kitName').value.trim()||'Mon kit '+(S.customKits.length+1);S.customKits.push({id:'c'+Date.now(),fr:n,d:S.lights.length+' lumières',L:S.lights.map(l=>[l.type,l.role,l.x,l.y,l.z,l.power,l.kelvin,l.gel])});S.kitCat='mine';all();toast('Kit « '+n+' » enregistré');return}
  if(t.id==='copy'){copyEl('#pmain');return}
  if(t.id==='copyneg'){copyEl('#pneg');return}
- if(t.id==='reset'){S=defaults();R={};saveRefs();POP=null;bgQ='';all();toast('Scène réinitialisée')}
+ if(t.id==='reset'){S=defaults(S.ptype);R={};saveRefs();POP=null;bgQ='';all();toast('Scène réinitialisée')}
 });
 function onField(e){
  const el=e.target;
@@ -443,7 +475,7 @@ function onField(e){
  const fmt=(k,v)=>k==='temp'?tempLabel():k.endsWith('kelvin')?v+' K':k.endsWith('power')?v+'%':k==='camera.z'?(+v).toFixed(2)+' m':k.endsWith('.z')?(+v).toFixed(1)+' m':k==='camera.tilt'||k==='camera.roll'?v+'°':v;
  $$(`[data-out="${k}"]`).forEach(o=>o.textContent=fmt(k,v));
  if(k.startsWith('camera.')){$$('[data-out="camera.tilt"]').forEach(o=>o.textContent=camTilt()+'°');$$('input[data-k="camera.tilt"]').forEach(i=>{i.value=camTilt();i.disabled=S.camera.aim})}
- if(el.dataset.rerender!==undefined||k==='camera.aim'){if(el.closest('#pop'))renderPop();else renderPanel()}
+ if(el.dataset.rerender!==undefined||k==='camera.aim'){if(el.closest('#pop'))renderPop();else if(el.closest('#win'))renderWin();else if(el.closest('#turbo'))renderTurbo();else renderPanel()}
  else if(el.closest('#pop')&&S.tab!=='decor')renderPanelSoft();
  lightsRefresh();save();
 }
@@ -457,3 +489,4 @@ document.addEventListener('drop',e=>{const s=e.target.closest('.slot');if(!s)ret
 const sw=$('#stagewrap');sw.addEventListener('pointerdown',onDown);sw.addEventListener('pointermove',onMove);sw.addEventListener('pointerup',onUp);sw.addEventListener('pointercancel',()=>{drag=null});
 window.addEventListener('resize',()=>{if(POP)renderPop()});
 
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&typeof POP!=='undefined'&&POP&&!WIN&&$('#overlay').hidden){POP=null;renderPop();renderStage()}});

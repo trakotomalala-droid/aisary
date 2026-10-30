@@ -5,7 +5,8 @@
  */
 /* ================= GUIDE DE DÉMARRAGE & VISITE GUIDÉE ================= */
 let GD={path:null,step:'mode'};
-const GSTEPS={noapi:['mode','folder','import','project'],api:['mode','key','model','project']};
+const GSTEPS={noapi:['mode','folder','import','upscale','project'],api:['mode','key','model','upscale','project']};
+let GD_TYPE='human';
 function gProgress(){const list=GSTEPS[GD.path||'noapi'],i=list.indexOf(GD.step);return `<div class="gprog">${list.map((s,j)=>`<i class="${j<=i?'on':''}"></i>`).join('')}<span>Étape ${i+1} sur ${list.length}</span></div>`}
 function gNav(next='Suivant',back=true){return `<div class="gnav">${back?`<button class="btn ghost" data-gback>${ic('arrow-left')}Retour</button>`:''}<span class="sp"></span><button class="linkbtn" data-gskip>Passer le guide</button><button class="btn primary" data-gnext>${next}${ic('arrow-right')}</button></div>`}
 const folderTree=()=>`<div class="tree">
@@ -37,15 +38,24 @@ function guideHTML(){const s=GD.step;let b='';
   <p class="hint">Pas encore de clé ? <button class="linkbtn" data-gmode="noapi">Passer en mode sans API</button></p>${gNav()}`;
  if(s==='model')b=`${gProgress()}<h2>${ic('cpu')} Choisissez votre modèle</h2><p>Le modèle qui recevra vos prompts. Vous pourrez le changer dans « Gérer les clés ».</p>
   ${Object.entries(SERVICES).map(([sv,v])=>`<div class="field"><label class="lab">${v.n}${keyFor(sv)?'':' · aucune clé'}</label><select data-gmodel="${sv}">${v.models.map(([id,l])=>`<option value="${id}"${G.models[sv]===id?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`).join('')}${gNav()}`;
- if(s==='project')b=`${gProgress()}<h2>${ic('clapperboard')} Créez votre premier projet</h2><p>Un projet = une image à créer. Donnez-lui un nom parlant : vous le retrouverez sur l'accueil.</p>
+ if(s==='upscale')b=`${gProgress()}<h2 class="gup">${ic('maximize')} Upscale : prêt pour l'impression</h2>
+  <p>Une image générée par Gemini ou ChatGPT est souvent trop petite pour une affiche ou un panneau 4×3. L'<b>Upscale</b> (en violet) l'agrandit pour l'impression :</p>
+  <ol class="gsteps"><li><span class="gico up">${ic('image-up')}</span><div><b>Importez l'image générée</b><small>Depuis l'Export du projet (« Importer l'image »), ou glissez-la directement dans l'écran Upscale.</small></div></li>
+  <li><span class="gico up">${ic('printer')}</span><div><b>Choisissez le format d'impression</b><small>A4, affiche A0, roll-up, panneau 4×3 m, bâche… AIsary calcule la taille en pixels et la résolution.</small></div></li>
+  <li><span class="gico up">${ic('cpu')}</span><div><b>Choisissez la méthode et exportez</b><small>Classique (rapide), IA locale (plus de détails) ou Gemini 4K (avec clé). Fichier JPEG, PNG ou TIFF prêt pour l'imprimeur.</small></div></li></ol>
+  <p class="hint">Le bouton violet « Upscale » est toujours en haut de l'écran.</p>${gNav()}`;
+ if(s==='project')b=`${gProgress()}<h2>${ic('clapperboard')} Créez votre premier projet</h2><p>Un projet = une image. Choisissez d'abord le type : l'interface prend sa couleur et ses menus s'adaptent.</p>
+  <div class="ptypes">${Object.entries(PTYPES).map(([k,v])=>`<button type="button" class="ptype" data-gtype="${k}" style="--tc:${v.accent}" aria-pressed="${GD_TYPE===k}"><span class="pti">${ic(v.ic)}</span><b>${esc(v.fr)}</b><small>${esc(v.d)}</small></button>`).join('')}</div>
   <input type="text" id="gProj" value="Mon premier projet" aria-label="Nom du projet" autocomplete="off">
+  <p class="hint">${ic('zap')} Pressé ? Le <b>mode Turbo</b>, sur l'accueil, crée une image en quelques clics.</p>
   <p>Ensuite, une courte visite vous montre l'interface, du décor jusqu'à l'image finale.</p>${gNav('Créer et visiter')}`;
  return `<div class="wl-card guide" role="dialog" aria-modal="true">${b}</div>`}
 function guideStart(){GD={path:null,step:'mode'};openOverlay(guideHTML())}
 function gGo(dir){const list=GSTEPS[GD.path||'noapi'],i=list.indexOf(GD.step)+dir;if(i<0){GD.step='mode';GD.path=null}else GD.step=list[Math.min(i,list.length-1)];openOverlay(guideHTML())}
-async function gFinish(name){G.guided=true;saveG();closeOverlay();await createProject(name||'Mon premier projet');setTimeout(()=>tourStart(),350)}
+async function gFinish(name){G.guided=true;saveG();closeOverlay();await createProject(name||'Mon premier projet',GD_TYPE);setTimeout(()=>tourStart(),350)}
 document.addEventListener('click',async e=>{
- const t=e.target.closest('[data-gmode],[data-gnext],[data-gback],[data-gskip],#gRoot,[data-tnext],[data-tprev],[data-tend]');if(!t)return;const d=t.dataset;
+ const t=e.target.closest('[data-gmode],[data-gnext],[data-gback],[data-gskip],#gRoot,[data-tnext],[data-tprev],[data-tend],[data-gtype]');if(!t)return;const d=t.dataset;
+ if(d.gtype){GD_TYPE=d.gtype;const nm=$('#gProj')?.value;openOverlay(guideHTML());if(nm&&$('#gProj'))$('#gProj').value=nm;setTheme(GD_TYPE);return}
  if(d.gmode){GD.path=d.gmode;G.mode=d.gmode;saveG();renderModeSwitch();GD.step=GSTEPS[d.gmode][1];openOverlay(guideHTML());return}
  if(d.gback!==undefined){gGo(-1);return}
  if(d.gskip!==undefined){G.guided=true;saveG();closeOverlay();showScreen('home');return}
@@ -61,15 +71,17 @@ document.addEventListener('click',async e=>{
 
 /* ---------- visite guidée ---------- */
 const TOUR=[
- {sel:'#homeBtn',t:'Accueil et projets',x:'Revenez ici pour créer un projet, rouvrir un projet récent ou enregistrer vos fichiers .aisary.'},
+ {sel:'#homeBtn',t:'Accueil et projets',x:'Revenez ici pour créer un projet, lancer le mode Turbo, rouvrir un projet récent ou un fichier .aisary.'},
+ {sel:'#ptBadge',t:'Le type de projet',x:'Personnages en jaune, Packshot en bleu, Paysages en vert : la couleur vous dit toujours dans quel type de projet vous êtes.'},
+ {sel:'#saveBtn',t:'Enregistrer',x:'Tout s’enregistre automatiquement, mais ce bouton confirme l’enregistrement et copie le projet dans votre dossier de dépôt.'},
  {sel:'#modeSwitch',t:'Avec ou sans API',x:'Cet interrupteur choisit comment l’image sera créée : dossier à coller dans votre modèle, ou génération directe avec votre clé.'},
- {sel:'#tabs',t:'Les réglages de la scène',x:'Avancez de gauche à droite : décor, Madagascar, ambiance, lumières, caméra, sujets, rendu. Chaque catégorie a sa barre de prompt ✎ pour écrire librement.',tab:'decor'},
- {sel:'[data-tab="mada"]',t:'L’onglet Madagascar',x:'Tana, les Hautes Terres, la côte Est, le Nord, l’Ouest, le Sud et la vie quotidienne : des décors malgaches prêts à l’emploi.'},
- {sel:'#stagewrap',t:'Le plateau',x:'Glissez les lumières, la caméra et les sujets. Cliquez sur un élément pour ouvrir son mini-menu de réglages.'},
- {sel:'.views',t:'Vues Z, X et Y',x:'Dessus, face et côté : montez la caméra, baissez une lumière, contrôlez l’inclinaison.'},
+ {sel:'#tabs',t:'Les onglets de réglages',x:'Avancez de gauche à droite. Chaque onglet affiche des cartes : cliquez sur « Modifier » pour ouvrir la fenêtre de réglage.',tab:'decor'},
+ {sel:'#panel .ccard',t:'Une carte = un réglage',x:'La carte résume vos choix. « Modifier » ouvre une fenêtre avec vos choix (supprimables d’un clic sur ×), une barre pour écrire librement, et les préréglages. Validez, annulez ou réinitialisez.'},
+ {sel:'#stagewrap',t:'Le plateau en 3 vues',x:'Dessus, face et côté en même temps. Glissez les lumières, la caméra et les sujets ; cliquez sur un élément pour ouvrir son mini-menu.'},
+ {sel:'#addLightBtn',t:'Ajouter une lumière',x:'Ajoutez une lumière directement sur le plateau : softbox, soleil, néon, bougie…'},
  {sel:'.finderbox',t:'Le viseur',x:'Un aperçu indicatif du cadrage, mis à jour à chaque réglage.'},
- {sel:'#prompt',t:'Le prompt en direct',x:'AIsary écrit le prompt pendant que vous composez. Pas besoin d’y toucher.'},
- {sel:'#exportBtn',t:'L’export',x:'Quand la scène vous plaît, passez à l’export : récapitulatif, choix du modèle, puis dossier du projet ou génération directe.'},
+ {sel:'#exportBtn',t:'L’export',x:'Quand la scène vous plaît : récapitulatif, choix du modèle, puis étapes guidées (copier le texte, ouvrir les pièces jointes, coller dans Gemini).'},
+ {sel:'#upBtn',t:'Upscale',x:'Pour l’impression : agrandissez l’image générée en A0, 4×3 m ou bâche, et exportez un fichier prêt pour l’imprimeur.'},
 ];
 let TI=0;
 function tourStart(){TI=0;if(!$('#tour')){const d=document.createElement('div');d.id='tour';d.innerHTML='<div id="spot"></div><div id="coach" role="dialog" aria-live="polite"></div>';document.body.appendChild(d)}$('#tour').hidden=false;tourShow()}

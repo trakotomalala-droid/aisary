@@ -16,8 +16,11 @@
   <header>
     <button class="logo" id="aboutBtn" aria-label="À propos d'AIsary"><span id="brandSlot"></span></button>
     <button class="btn ghost needproj" id="homeBtn" hidden><i data-lucide="house" class="ic"></i><span>Accueil</span></button>
+    <span class="ptbadge2 needproj" id="ptBadge" hidden></span>
     <input type="text" id="projName" class="projname needproj" aria-label="Nom du projet" hidden>
+    <button class="btn ghost needproj savebtn" id="saveBtn" hidden title="Enregistrer le projet"><i data-lucide="save" class="ic"></i><span>Enregistrer</span><small id="saveState" data-state="ok"></small></button>
     <div class="sp"></div>
+    <button class="btn upbtn" id="upBtn" title="Agrandir une image pour l'impression"><i data-lucide="maximize" class="ic"></i><span>Upscale</span></button>
     <div class="modesw" id="modeSwitch" role="group" aria-label="Mode de génération"></div>
     <button class="btn primary needproj" id="exportBtn" hidden><i data-lucide="send" class="ic"></i><span>Exporter</span></button>
     <button class="btn ghost iconly" id="aboutBtn2" onclick="document.getElementById('aboutBtn').click()" aria-label="À propos"><i data-lucide="info" class="ic"></i></button>
@@ -32,13 +35,9 @@
     <section class="col" aria-label="Plateau">
       <div class="stagehd">
         <h2>Plateau</h2>
-        <div class="views" role="group" aria-label="Choix de la vue">
-          <button class="vbtn" data-view="z"><b>Z</b><span>Dessus</span></button>
-          <button class="vbtn" data-view="x"><b>X</b><span>Face</span></button>
-          <button class="vbtn" data-view="y"><b>Y</b><span>Côté</span></button>
-          <button class="vbtn" data-view="all"><i data-lucide="layout-grid" class="ic"></i><span>3 vues</span></button>
-        </div>
+        <span class="vlegend"><b>Z</b> dessus · <b>X</b> face · <b>Y</b> côté</span>
         <div class="sp"></div>
+        <div class="addwrap"><button class="btn small" id="addLightBtn" aria-haspopup="true"><i data-lucide="lightbulb" class="ic"></i><span>+ Lumière</span></button><div id="addmenu" hidden></div></div>
         <span class="hintbar"><i data-lucide="mouse-pointer-click" class="ic"></i>Glissez pour placer · cliquez pour régler</span>
       </div>
       <div id="stagewrap">
@@ -60,20 +59,27 @@
     </section>
   </main>
   <section id="export" aria-label="Export" hidden></section>
+  <section id="upscale" aria-label="Upscale" hidden></section>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div id="win" hidden></div>
+<div id="turbo" hidden></div>
 <div id="overlay" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/mada.js"></script>
+<script src="js/data2.js"></script>
 <script src="js/store.js"></script>
 <script src="js/poses.js"></script>
+<script src="js/poses2.js"></script>
 <script src="js/app.js"></script>
 <script src="js/panel.js"></script>
 <script src="js/brand.js"></script>
 <script src="js/home.js"></script>
 <script src="js/export.js"></script>
+<script src="js/turbo.js"></script>
+<script src="js/upscale.js"></script>
 <script src="js/guide.js"></script>
 <script src="js/desktop.js"></script>
 <script src="js/boot.js"></script>

@@ -4,7 +4,7 @@
  * Licence : GPL-3.0-or-later (voir LICENSE)
  */
 /* ================= MARQUE AIsary ================= */
-const AISARY_VERSION='0.5.3';
+const AISARY_VERSION='2.0.0';
 const WM='<span class="wm-ai">AI</span>sary';
 const MVOLA={num:'+261 38 71 559 16',raw:'+261387155916',name:'Toky Rakotomalala'};
 function logoMark(size=40,id='lm'){
