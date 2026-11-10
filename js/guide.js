@@ -42,8 +42,8 @@ function guideHTML(){const s=GD.step;let b='';
   <p>Une image générée par Gemini ou ChatGPT est souvent trop petite pour une affiche ou un panneau 4×3. L'<b>Upscale</b> (en violet) l'agrandit pour l'impression :</p>
   <ol class="gsteps"><li><span class="gico up">${ic('image-up')}</span><div><b>Importez l'image générée</b><small>Depuis l'Export du projet (« Importer l'image »), ou glissez-la directement dans l'écran Upscale.</small></div></li>
   <li><span class="gico up">${ic('printer')}</span><div><b>Choisissez le format d'impression</b><small>A4, affiche A0, roll-up, panneau 4×3 m, bâche… AIsary calcule la taille en pixels et la résolution.</small></div></li>
-  <li><span class="gico up">${ic('cpu')}</span><div><b>Choisissez la méthode et exportez</b><small>Classique (rapide), IA locale (plus de détails) ou Gemini 4K (avec clé). Fichier JPEG, PNG ou TIFF prêt pour l'imprimeur.</small></div></li></ol>
-  <p class="hint">Le bouton violet « Upscale » est toujours en haut de l'écran.</p>${gNav()}`;
+  <li><span class="gico up">${ic('cpu')}</span><div><b>Choisissez la méthode et exportez</b><small>L’IA Upscayl (recommandée) recrée les détails sur votre carte graphique, avec 7 modèles au choix. Aussi : Classique (instantané) ou Gemini 4K (avec clé). Fichier JPEG, PNG, WebP ou TIFF, une image ou tout un lot.</small></div></li></ol>
+  <p class="hint">Le bouton violet « Upscale » est toujours en haut de l'écran. Moteur IA : modèles <b>Upscayl</b>, merci à leur équipe ! Les modèles marqués « Non commercial » ne sont pas pour les travaux clients.</p>${gNav()}`;
  if(s==='project')b=`${gProgress()}<h2>${ic('clapperboard')} Créez votre premier projet</h2><p>Un projet = une image. Choisissez d'abord le type : l'interface prend sa couleur et ses menus s'adaptent.</p>
   <div class="ptypes">${Object.entries(PTYPES).map(([k,v])=>`<button type="button" class="ptype" data-gtype="${k}" style="--tc:${v.accent}" aria-pressed="${GD_TYPE===k}"><span class="pti">${ic(v.ic)}</span><b>${esc(v.fr)}</b><small>${esc(v.d)}</small></button>`).join('')}</div>
   <input type="text" id="gProj" value="Mon premier projet" aria-label="Nom du projet" autocomplete="off">

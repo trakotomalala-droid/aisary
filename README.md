@@ -23,13 +23,19 @@ AIsary a été créé par **Toky Rakotomalala**, directeur artistique à Madagas
 
 ## Ce que fait AIsary
 
-**Version 2** : trois types de projet, chacun avec sa couleur.
+**Version 3** : l'Upscale utilise désormais les modèles d'IA d'**[Upscayl](https://github.com/upscayl/upscayl)**, exécutés directement dans le navigateur.
+
+Trois types de projet, chacun avec sa couleur :
 
 - 🟡 **Personnages** : une ou plusieurs personnes (solo, duo, trio, foule), poses illustrées et suggérées selon le décor (chaise → assis, voiture → dans ou devant la voiture…).
 - 🔵 **Packshot** : produit fidèle à vos photos, splash (lait, eau, jus…), jusqu'à 6 fruits importés, surface d'eau, décors futuristes, main, personnage.
 - 🟢 **Paysages** : décors, nature morte, paysages idylliques, éléments et composition.
 - ⚡ **Mode Turbo** : avatar ou produit, décor, pose, format… et c'est prêt à exporter.
-- 🟣 **Upscale** : agrandissez une image générée pour l'impression (A4 à A0, 4×3 m, bâche…), en classique, IA locale ou Gemini 4K, avec les dpi écrits dans le fichier (JPEG, PNG, TIFF).
+- 🟣 **Upscale** : agrandissez une image générée pour l'impression (A4 à A0, 4×3 m, bâche…), avec les dpi écrits dans le fichier.
+  - **IA Upscayl** : les 7 modèles d'Upscayl (Standard, Lite, Haute fidélité, Art numérique, Remacri, UltraMix, UltraSharp) tournent sur la carte graphique grâce à WebGPU, sans serveur et sans envoyer vos images. Double Upscayl (jusqu'à ×16), mode TTA, taille des tuiles, modèles personnalisés (ncnn), traitement par lot avec ZIP.
+  - Aussi : Classique HD (instantané) et Gemini 4K (avec clé API).
+  - Formats JPEG, PNG, WebP, TIFF.
+  - Navigateur requis pour l'IA : Chrome ou Edge récent (WebGPU).
 - **Fenêtres de réglage** : chaque carte s'ouvre en fenêtre (Valider, Annuler, Réinitialiser), avec la boîte « Vos choix » et une barre pour écrire librement.
 - **Votre propre décor** : importez votre photo de fond.
 
@@ -68,6 +74,7 @@ Les applications sont fabriquées automatiquement par GitHub Actions (Tauri) à 
 - [x] Guide de démarrage et visite guidée
 - [x] V2 : 3 types de projet, mode Turbo, fenêtres de réglage, poses contextuelles, export guidé
 - [x] Upscale pour l'impression
+- [x] V3 : IA Upscayl dans le navigateur (WebGPU)
 - [ ] Vue 3D de la scène
 - [x] Applications Mac et Windows (Tauri, fabrication automatique)
 - [ ] Export PSD par calques et vectoriel
@@ -85,9 +92,18 @@ AIsary est gratuit et le restera. Si l'outil vous fait gagner du temps, vous pou
 
 Misaotra ! (Merci !)
 
+## Merci
+
+- **[Upscayl](https://github.com/upscayl/upscayl)** (Nayam Amarshe, TGS963 et contributeurs) pour leurs modèles d'upscaling, sous licence AGPL v3.
+- **[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)** (Xintao Wang), BSD 3-Clause.
+- Helaman (HFA2k), Foolhardy (Remacri) et Kim2091 (UltraSharp, UltraMix) pour leurs modèles. Remacri, UltraMix et UltraSharp sont sous licence **non commerciale** : AIsary le signale à l'écran.
+- Détails et licences : [models/upscayl/NOTICE.md](models/upscayl/NOTICE.md).
+
 ## Licence
 
 AIsary est distribué sous licence **GNU GPL v3 ou ultérieure**. Voir [LICENSE](LICENSE).
+
+Les modèles du dossier `models/upscayl/` viennent d'Upscayl et gardent leur propre licence (AGPL v3 pour Upscayl, et licence de chaque auteur de modèle) : voir [NOTICE.md](models/upscayl/NOTICE.md). La GPL v3 permet explicitement de les associer à des éléments sous AGPL v3 (article 13).
 
 Vous pouvez utiliser, modifier et partager AIsary librement. Toute version modifiée doit rester libre, sous la même licence, et conserver le crédit de l'auteur original : **Toky Rakotomalala**.
 
@@ -97,7 +113,7 @@ Copyright © 2026 Toky Rakotomalala
 
 ## English
 
-**AIsary** by Toky Rakotomalala is a free, open-source tool that lets creatives compose AI images like on a real photo set: background, mood, lights, camera and subjects. Version 2 adds three project types (people, packshot, landscapes), a Turbo mode, settings windows, context-aware poses, guided export and a print upscaler. It then writes a prompt tailored to the chosen image model (Gemini, GPT Image, Flux, Midjourney, Stable Diffusion). "Sary" means "image" in Malagasy.
+**AIsary** by Toky Rakotomalala is a free, open-source tool that lets creatives compose AI images like on a real photo set: background, mood, lights, camera and subjects. Version 3 runs Upscayl's AI upscaling models (Real-ESRGAN family, ncnn format) directly in the browser with a custom WebGPU engine. Version 2 added three project types (people, packshot, landscapes), a Turbo mode, settings windows, context-aware poses, guided export and a print upscaler. It then writes a prompt tailored to the chosen image model (Gemini, GPT Image, Flux, Midjourney, Stable Diffusion). "Sary" means "image" in Malagasy.
 
 Created in Madagascar by art director Toky Rakotomalala, first for Malagasy creatives and designers, and open to everyone.
 

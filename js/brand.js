@@ -4,7 +4,7 @@
  * Licence : GPL-3.0-or-later (voir LICENSE)
  */
 /* ================= MARQUE AIsary ================= */
-const AISARY_VERSION='2.0.0';
+const AISARY_VERSION='3.0.0';
 const WM='<span class="wm-ai">AI</span>sary';
 const MVOLA={num:'+261 38 71 559 16',raw:'+261387155916',name:'Toky Rakotomalala'};
 function logoMark(size=40,id='lm'){
@@ -43,7 +43,7 @@ function aboutHTML(){return `<div class="wl-card about" role="dialog" aria-modal
   <dt>Version</dt><dd>${AISARY_VERSION}</dd>
   <dt>Créateur</dt><dd>Toky Rakotomalala, directeur artistique, Madagascar</dd>
   <dt>Licence</dt><dd>GNU GPL v3</dd>
-  <dt>Appli</dt><dd><a href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">Télécharger pour Mac et Windows</a></dd>
+  <dt>Upscale IA</dt><dd>Modèles d'<a href="https://github.com/upscayl/upscayl" target="_blank" rel="noopener">Upscayl</a> (Nayam Amarshe, TGS963 et contributeurs, AGPL v3), basés sur Real-ESRGAN (Xintao Wang). Modèles de Helaman (HFA2k), Foolhardy (Remacri) et Kim2091 (UltraSharp, UltraMix).</dd>
   <dt>Code</dt><dd><a href="https://github.com/trakotomalala-droid/aisary" target="_blank" rel="noopener">github.com/trakotomalala-droid/aisary</a></dd>
  </dl>
  <p>AIsary aide les créatifs à composer une scène (décor, lumière, caméra, sujets) et transforme ces choix en prompt précis pour les modèles d'image.</p>

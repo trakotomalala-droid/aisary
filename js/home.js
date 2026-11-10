@@ -25,7 +25,7 @@ async function renderHome(){
     <button class="btn small ghost" type="button" id="replayGuide">${ic('graduation-cap')}Revoir le guide</button>${window.__TAURI__?'':`<a class="btn small ghost" href="https://github.com/trakotomalala-droid/aisary/releases/latest" target="_blank" rel="noopener">${ic('monitor-down')}Appli Mac / Windows</a>`}</div>
    </form>
   </section>
-  <button class="upcard" id="upHome">${ic('maximize')}<div><b>Upscale pour l'impression</b><span>Agrandissez une image générée (Gemini, ChatGPT…) pour une affiche, un 4×3 ou une bâche, et exportez un fichier prêt à imprimer.</span></div>${ic('arrow-right')}</button>
+  <button class="upcard" id="upHome">${ic('maximize')}<div><b>Upscale pour l'impression</b><span>Agrandissez une image générée (Gemini, ChatGPT…) avec l'IA Upscayl, pour une affiche, un 4×3 ou une bâche, et exportez un fichier prêt à imprimer.</span></div>${ic('arrow-right')}</button>
   <section class="recents"><div class="rhd"><h2>Projets récents</h2><span class="hint">${list.length} projet${list.length>1?'s':''} · enregistrés sur cet ordinateur</span></div>
    ${list.length?`<div class="pgrid">${list.map(p=>{const t=PTYPES[p.scene?.ptype||'human'];return `<article class="pcard" style="--tc:${t.accent}">
     <button class="pthumb" data-open="${p.id}" aria-label="Ouvrir ${esc(p.name)}">${projThumb(p)}<span class="ptbadge">${ic(t.ic)}${esc(t.fr)}</span>${(p.results||[]).length?`<span class="pbadge">${ic('image')}${p.results.length}</span>`:''}</button>
