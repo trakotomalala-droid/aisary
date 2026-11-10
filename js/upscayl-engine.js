@@ -12,6 +12,8 @@
 const UPX=(()=>{
 const PAD=12;            // marge autour de chaque tuile (évite les coutures)
 const CACHE='aisary-upscayl-v1';
+// source de secours : les mêmes fichiers dans le dépôt d'Upscayl, à une version figée
+const MIRROR='https://raw.githubusercontent.com/upscayl/upscayl/a00d55fee90e0f9435d5eaa86e76700df8199af8/resources/models/';
 
 /* ---------- lecture du format ncnn ---------- */
 function parseParam(txt){
@@ -184,9 +186,11 @@ function buildPlan(m,S){const dev=GPU.dev,P=GPU.pipes,layers=m.layers,{sh,out}=i
   destroy(){this.made.forEach(b=>{try{b.destroy()}catch(e){}})}}}
 
 /* ---------- fichiers de modèles (avec cache hors ligne) ---------- */
-async function getFile(url,onp){let c=null;try{c=await caches.open(CACHE)}catch(e){}
+async function getFile(url,onp,alt){let c=null;try{c=await caches.open(CACHE)}catch(e){}
  if(c){const hit=await c.match(url);if(hit){onp&&onp(1);return hit.arrayBuffer()}}
- const res=await fetch(url);if(!res.ok)throw new Error('Modèle introuvable ('+res.status+')');
+ let res=null;try{res=await fetch(url);if(!res.ok)res=null}catch(e){res=null}
+ if(!res&&alt){try{res=await fetch(alt);if(!res.ok)res=null}catch(e){res=null}}
+ if(!res)throw new Error('Modèle introuvable : vérifiez votre connexion internet.');
  const len=+res.headers.get('content-length')||0;let got=0;const parts=[];
  if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onp&&len&&onp(Math.min(1,got/len))}}
  else parts.push(new Uint8Array(await res.arrayBuffer()));
@@ -207,8 +211,8 @@ async function delCustom(name){try{const c=await caches.open(CACHE);await c.dele
 async function loadModel(id,base,onp){await gpuInit();if(MODELS.has(id))return MODELS.get(id);
  const isC=id.startsWith('custom:'),name=isC?id.slice(7):id;
  const pu=isC?customURL(name,'param'):new URL(base+name+'.param',location.href).href,bu=isC?customURL(name,'bin'):new URL(base+name+'.bin',location.href).href;
- const txt=new TextDecoder().decode(await getFile(pu));const layers=parseParam(txt);
- const W=loadWeights(layers,await getFile(bu,onp));
+ const txt=new TextDecoder().decode(await getFile(pu,null,isC?null:MIRROR+name+'.param'));const layers=parseParam(txt);
+ const W=loadWeights(layers,await getFile(bu,onp,isC?null:MIRROR+name+'.bin'));
  for(const [k,m] of MODELS){m.plans&&m.plans.forEach(p=>p.destroy());Object.values(m.gpu||{}).forEach(g=>Object.values(g).forEach(b=>b&&b.destroy&&b.destroy()));MODELS.delete(k)}
  const m={id,layers,gpu:uploadModel(layers,W),plans:new Map(),scale:memPlan(layers,32).scale};MODELS.set(id,m);return m}
 
