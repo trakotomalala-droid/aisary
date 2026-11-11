@@ -7,6 +7,21 @@
 <p align="center"><strong>Composez vos images IA comme sur un vrai plateau photo.</strong><br>
 Logiciel libre et gratuit, créé à Madagascar.</p>
 
+<p align="center">
+  <a href="https://trakotomalala-droid.github.io/aisary/"><img src="https://img.shields.io/badge/%E2%96%B6%20Essayer%20AIsary-gratuit%2C%20dans%20le%20navigateur-3dff8f?style=for-the-badge&labelColor=111" alt="Essayer AIsary"></a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/version-3.0-a970ff?style=flat-square" alt="Version 3.0">
+  <img src="https://img.shields.io/badge/licence-GPL%20v3-2ee6ff?style=flat-square" alt="Licence GPL v3">
+  <img src="https://img.shields.io/badge/fait%20%C3%A0-Madagascar-ffd23a?style=flat-square" alt="Fait à Madagascar">
+  <img src="https://img.shields.io/badge/sans%20compte-sans%20installation-3dff8f?style=flat-square" alt="Sans compte, sans installation">
+</p>
+
+<p align="center"><b>👉 <a href="https://trakotomalala-droid.github.io/aisary/">trakotomalala-droid.github.io/aisary</a></b><br>
+<sub>Chrome ou Edge recommandés · <i>Compose AI images like on a real photo set: backgrounds, lights, camera, subjects. AIsary writes the prompt for Gemini, ChatGPT, Midjourney, Flux or Stable Diffusion, and upscales for print with Upscayl's AI models, right in your browser.</i></sub></p>
+
+<p align="center"><img src="docs/captures/plateau-personnages.png" width="900" alt="Le plateau d'AIsary : vues de dessus, de face et de côté, viseur et prompt généré"></p>
+
 ---
 
 ## Tongasoa ! (Bienvenue)
@@ -91,6 +106,14 @@ AIsary est gratuit et le restera. Si l'outil vous fait gagner du temps, vous pou
 - **GitHub Sponsors** : bientôt disponible pour les dons depuis l'étranger.
 
 Misaotra ! (Merci !)
+
+## En images
+
+| Accueil : 3 types de projet et mode Turbo | Packshot : produit, splash, fruits, décors |
+|---|---|
+| <img src="docs/captures/accueil.png" alt="Accueil d'AIsary"> | <img src="docs/captures/plateau-packshot.png" alt="Projet packshot"> |
+| **Upscale avec l'IA Upscayl : 7 modèles** | **Plateau et prompt généré** |
+| <img src="docs/captures/upscale-upscayl.png" alt="Écran Upscale avec les modèles Upscayl"> | <img src="docs/captures/plateau-personnages.png" alt="Plateau d'un projet personnages"> |
 
 ## Merci
 

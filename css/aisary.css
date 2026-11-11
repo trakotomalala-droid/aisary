@@ -680,3 +680,7 @@ img.rsw{object-fit:cover}
 .upadv summary svg.lucide{width:16px;height:16px;color:var(--accent)}
 .upadv[open] summary{margin-bottom:8px}
 .xstep.final .btn+.btn{margin-top:8px}
+/* V3.0.1 : barre du haut sur une ligne, pastilles des projets */
+@media (min-width:900px){header{flex-wrap:nowrap}header>*{flex-shrink:0}header .projname{flex:1 1 200px;min-width:110px;max-width:260px}}
+@media (max-width:1560px){.savebtn small{display:none}}
+.pthumb .ptbadge svg,.pthumb .pbadge svg{width:12px;height:12px;flex:none}
