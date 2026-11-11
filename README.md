@@ -1,9 +1,7 @@
 <p align="center">
-  <img src="assets/logo.svg" width="120" alt="Logo AIsary">
+  <a href="https://trakotomalala-droid.github.io/aisary/"><img src="docs/banniere.png" alt="AIsary par Toky Rakotomalala : composez vos images IA comme sur un plateau photo"></a>
 </p>
 
-<h1 align="center">AIsary</h1>
-<p align="center"><em>par Toky Rakotomalala</em></p>
 <p align="center"><strong>Composez vos images IA comme sur un vrai plateau photo.</strong><br>
 Logiciel libre et gratuit, créé à Madagascar.</p>
 
